@@ -1,0 +1,207 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-and-test:
+    name: Build and Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Chrome (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          # Check if Chrome is already installed
+          if [ -f "/usr/bin/google-chrome" ]; then
+            echo "CHROME_PATH=/usr/bin/google-chrome" >> $GITHUB_ENV
+            echo "Chrome found at standard location"
+          elif [ -f "/usr/bin/google-chrome-stable" ]; then
+            echo "CHROME_PATH=/usr/bin/google-chrome-stable" >> $GITHUB_ENV
+            echo "Chrome stable found"
+          elif [ -f "/usr/bin/chromium-browser" ]; then
+            echo "CHROME_PATH=/usr/bin/chromium-browser" >> $GITHUB_ENV
+            echo "Chromium found, using as Chrome"
+          else
+            # Install Chrome from Google's repository
+            sudo apt-get update
+            sudo apt-get install -y wget
+            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update
+            sudo apt-get install -y google-chrome-stable
+            if [ -f "/usr/bin/google-chrome" ]; then
+              echo "CHROME_PATH=/usr/bin/google-chrome" >> $GITHUB_ENV
+            elif [ -f "/usr/bin/google-chrome-stable" ]; then
+              echo "CHROME_PATH=/usr/bin/google-chrome-stable" >> $GITHUB_ENV
+            else
+              echo "ERROR: Chrome installation failed"
+              exit 1
+            fi
+          fi
+
+      - name: Install Chrome (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          # Check if Chrome is already installed (common on GitHub Actions runners)
+          if [ -f "C:/Program Files/Google/Chrome/Application/chrome.exe" ]; then
+            echo "CHROME_PATH=C:/Program Files/Google/Chrome/Application/chrome.exe" >> $GITHUB_ENV
+            echo "Chrome found at standard location"
+          elif [ -f "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe" ]; then
+            echo "CHROME_PATH=C:/Program Files (x86)/Google/Chrome/Application/chrome.exe" >> $GITHUB_ENV
+            echo "Chrome found at x86 location"
+          else
+            # Install Chrome using chocolatey if available, otherwise download
+            echo "Chrome not found, attempting installation..."
+            if command -v choco &> /dev/null; then
+              choco install googlechrome -y
+            else
+              curl -L -o chrome-setup.exe "https://dl.google.com/chrome/install/latest/chrome_installer.exe"
+              # Use PowerShell to run installer silently
+              powershell.exe -Command "Start-Process -FilePath chrome-setup.exe -ArgumentList '/silent /install' -Wait -NoNewWindow"
+              rm -f chrome-setup.exe
+              sleep 20
+            fi
+            # Verify installation after attempt
+            if [ -f "C:/Program Files/Google/Chrome/Application/chrome.exe" ]; then
+              echo "CHROME_PATH=C:/Program Files/Google/Chrome/Application/chrome.exe" >> $GITHUB_ENV
+            elif [ -f "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe" ]; then
+              echo "CHROME_PATH=C:/Program Files (x86)/Google/Chrome/Application/chrome.exe" >> $GITHUB_ENV
+            else
+              echo "ERROR: Chrome installation failed or Chrome not found"
+              exit 1
+            fi
+          fi
+
+      - name: Install Chrome (macOS)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          # Check if Chrome is already installed
+          if [ -f "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then
+            echo "CHROME_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" >> $GITHUB_ENV
+            echo "Chrome found at standard location"
+          else
+            # Install Chrome via Homebrew
+            brew install --cask google-chrome || true
+            # Wait a moment for installation to complete
+            sleep 5
+            if [ -f "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then
+              echo "CHROME_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" >> $GITHUB_ENV
+            else
+              echo "ERROR: Chrome installation path not found"
+              exit 1
+            fi
+          fi
+
+      - name: Verify Chrome installation
+        shell: bash
+        run: |
+          if [ -n "$CHROME_PATH" ]; then
+            echo "Chrome path: $CHROME_PATH"
+            if [ -f "$CHROME_PATH" ] || [ -d "$CHROME_PATH" ]; then
+              echo "✓ Chrome found at: $CHROME_PATH"
+            else
+              echo "ERROR: Chrome not found at specified path"
+              exit 1
+            fi
+          else
+            echo "ERROR: CHROME_PATH environment variable not set"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Build project
+        shell: bash
+        run: npm run build
+
+      - name: Run tests
+        shell: bash
+        run: npm test
+        env:
+          CHROME_PATH: ${{ env.CHROME_PATH }}
+
+      - name: Browser verification
+        shell: bash
+        run: |
+          # Use cross-platform temp directory
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            TEMP_DIR="$TEMP"
+          else
+            TEMP_DIR="/tmp"
+          fi
+          VERIFY_SCRIPT="$TEMP_DIR/browser-verify.js"
+          
+          cat > "$VERIFY_SCRIPT" << 'EOF'
+          import { BrowserManager } from './dist/browser/BrowserManager.js';
+          
+          async function verifyBrowser() {
+            const chromePath = process.env.CHROME_PATH;
+            console.log('Verifying browser with Chrome path:', chromePath);
+            
+            const manager = new BrowserManager(chromePath);
+            try {
+              await manager.initialize();
+              console.log('✓ Browser initialized successfully');
+              
+              const tabId = await manager.openTab({ url: 'https://example.com' });
+              console.log('✓ Tab opened successfully:', tabId);
+              
+              const tabs = await manager.getTabs();
+              console.log('✓ Active tabs:', tabs.length);
+              
+              if (tabs.length > 0 && tabs[0]) {
+                const tab = tabs[0];
+                console.log('✓ Tab URL:', tab.url);
+                console.log('✓ Tab title:', tab.title);
+              }
+              
+              const screenshot = await manager.screenshotTab(tabId, false);
+              if (screenshot && screenshot.length > 0) {
+                console.log('✓ Screenshot taken successfully (length:', screenshot.length, 'bytes)');
+              } else {
+                throw new Error('Screenshot was empty');
+              }
+              
+              await manager.closeTab(tabId);
+              console.log('✓ Tab closed successfully');
+              
+              await manager.close();
+              console.log('✓ Browser closed successfully');
+              
+              console.log('\n✅ Browser verification completed successfully!');
+              process.exit(0);
+            } catch (error) {
+              console.error('❌ Browser verification failed:', error);
+              process.exit(1);
+            }
+          }
+          
+          verifyBrowser();
+          EOF
+          
+          node "$VERIFY_SCRIPT"
+        env:
+          CHROME_PATH: ${{ env.CHROME_PATH }}
+
