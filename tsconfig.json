@@ -24,7 +24,8 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"

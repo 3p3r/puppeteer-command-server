@@ -1,7 +1,7 @@
 import puppeteer, { Browser, Page } from 'puppeteer-core';
-import { findChrome } from 'find-chrome-bin';
 import { randomUUID } from 'crypto';
 import { TabInfo, OpenTabRequest, BrowserError, TabNotFoundError } from '../types/index.js';
+import { findChromeBrowser } from '../chrome/FindChrome.js';
 
 export class BrowserManager {
   private browser: Browser | null = null;
@@ -26,7 +26,8 @@ export class BrowserManager {
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--headless'
         ]
       });
 
@@ -49,9 +50,9 @@ export class BrowserManager {
     }
 
     try {
-      const chromeInfo = await findChrome({});
-      if (chromeInfo && chromeInfo.executablePath) {
-        return chromeInfo.executablePath;
+      const chromePath = await findChromeBrowser();
+      if (chromePath) {
+        return chromePath;
       }
     } catch (error) {
       console.warn('Failed to find Chrome automatically:', error);

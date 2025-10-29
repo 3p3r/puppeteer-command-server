@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 
@@ -19,7 +19,7 @@ describe('Tab Routes - Request Validation', () => {
           code: 'INVALID_API_KEY'
         });
       }
-      next();
+      return next();
     });
 
     // Mock route handlers for validation testing
@@ -30,7 +30,7 @@ describe('Tab Routes - Request Validation', () => {
           error: 'URL is required'
         });
       }
-      res.json({ success: true, data: { tabId: 'test-tab' } });
+      return res.json({ success: true, data: { tabId: 'test-tab' } });
     });
 
     app.post('/api/tabs/goto/:tabId', (req, res) => {
@@ -40,7 +40,7 @@ describe('Tab Routes - Request Validation', () => {
           error: 'URL is required'
         });
       }
-      res.json({ success: true });
+      return res.json({ success: true });
     });
 
     app.post('/api/tabs/click/:tabId', (req, res) => {
@@ -50,7 +50,7 @@ describe('Tab Routes - Request Validation', () => {
           error: 'Selector is required'
         });
       }
-      res.json({ success: true });
+      return res.json({ success: true });
     });
 
     app.post('/api/tabs/fill/:tabId', (req, res) => {
@@ -60,7 +60,7 @@ describe('Tab Routes - Request Validation', () => {
           error: 'Selector and value are required'
         });
       }
-      res.json({ success: true });
+      return res.json({ success: true });
     });
 
     app.post('/api/tabs/eval/:tabId', (req, res) => {
@@ -70,7 +70,7 @@ describe('Tab Routes - Request Validation', () => {
           error: 'Script is required'
         });
       }
-      res.json({ success: true });
+      return res.json({ success: true });
     });
   });
 

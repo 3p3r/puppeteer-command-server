@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { configRouter } from './config.js';
@@ -31,7 +31,7 @@ describe('Config Routes', () => {
           code: 'INVALID_API_KEY'
         });
       }
-      next();
+      return next();
     });
 
     // Setup config mock
