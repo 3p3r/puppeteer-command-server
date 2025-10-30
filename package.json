@@ -2,15 +2,28 @@
   "name": "puppeteer-command-server",
   "version": "1.0.0",
   "description": "Exposes basic browser automation through HTTP and MCP",
-  "type": "module",
   "scripts": {
-    "build": "tsc",
+    "compile": "pkg --public dist/server.js -c package.json -C Brotli",
+    "bundle": "esbuild src/server.ts --bundle --platform=node --outfile=dist/server.js --format=cjs",
+    "build": "npm-run-all bundle compile",
     "dev": "nodemon --exec ts-node src/server.ts",
     "start": "node dist/server.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui"
+  },
+  "pkg": {
+    "assets": [
+      "dist/server.js"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64",
+      "node18-macos-x64",
+      "node18-macos-arm64"
+    ],
+    "outputPath": "build"
   },
   "repository": {
     "type": "git",
@@ -49,7 +62,9 @@
     "@types/swagger-ui-express": "^4.1.6",
     "@vitest/coverage-v8": "^4.0.4",
     "@vitest/ui": "^4.0.4",
+    "esbuild": "^0.25.11",
     "nodemon": "^3.0.2",
+    "npm-run-all": "^4.1.5",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.0",
