@@ -16,6 +16,7 @@
   "pkg": {
     "assets": [
       "dist/server.js",
+      "src/routes/*.ts",
       "node_modules/swagger-ui-dist/**/*"
     ]
   },

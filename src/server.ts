@@ -29,8 +29,10 @@ const config = loadConfig();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const baseApiSearchPath = path.resolve(__dirname, '../src/routes');
+
 // Swagger configuration
-const swaggerOptions = {
+const swaggerSpec = swaggerJsdoc({
   definition: {
     openapi: '3.0.0',
     info: {
@@ -69,10 +71,8 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./src/routes/*.ts'], // Path to the API files
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+  apis: [`${baseApiSearchPath}/*.ts`],
+});
 
 // Swagger documentation
 app.use('/docs', express.static(path.resolve(__dirname, `../node_modules/swagger-ui-dist/`), { index: false }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
