@@ -27,6 +27,8 @@ export class BrowserManager {
           '--no-first-run',
           '--no-zygote',
           '--disable-gpu',
+          // todo: browser's context needs to be isolated from the main user profile
+          // todo: we need to browser instances, one headless and one headed
           '--headless'
         ]
       });

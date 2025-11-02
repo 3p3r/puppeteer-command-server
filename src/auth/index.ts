@@ -70,3 +70,5 @@ export function authenticateApiKey(req: Request, res: Response, next: NextFuncti
   
   next();
 }
+
+loadApiKey(); // Ensure API key is loaded on module import
