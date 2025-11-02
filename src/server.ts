@@ -1,3 +1,4 @@
+import helmet from "helmet";
 import express from 'express';
 // import { createProxyMiddleware } from 'http-proxy-middleware';
 import swaggerUi from 'swagger-ui-express';
@@ -8,8 +9,18 @@ import { tabsRouter, initializeTabsRoutes } from './routes/tabs.js';
 import { configRouter } from './routes/config.js';
 import { initializeMcpServer } from './mcp/index.js';
 import { sseHandlers } from 'express-mcp-handler';
+import path from "path";
 
 const app = express();
+
+const cspDefaults = helmet.contentSecurityPolicy.getDefaultDirectives();
+delete cspDefaults['upgrade-insecure-requests'];
+
+// fixes swagger ui in prod
+// https://github.com/scottie1984/swagger-ui-express/issues/237
+app.use(helmet({
+  contentSecurityPolicy: { directives: cspDefaults }
+}));
 
 // Load configuration
 const config = loadConfig();
@@ -64,7 +75,7 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Swagger documentation
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/docs', express.static(path.resolve(__dirname, `../node_modules/swagger-ui-dist/`), { index: false }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Initialize browser manager and routes
 initializeTabsRoutes(config.chromePath);

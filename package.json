@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Exposes basic browser automation through HTTP and MCP",
   "scripts": {
-    "compile": "pkg --public dist/server.js -c package.json -C Brotli",
-    "bundle": "esbuild src/server.ts --bundle --platform=node --outfile=dist/server.js --format=cjs",
+    "compile": "NODE_OPTIONS='--import tsx' zx scripts/compile.zx.ts",
+    "bundle": "NODE_OPTIONS='--import tsx' zx scripts/bundle.zx.ts",
     "build": "npm-run-all bundle compile",
     "dev": "nodemon --exec ts-node src/server.ts",
     "start": "node dist/server.js",
@@ -15,15 +15,9 @@
   },
   "pkg": {
     "assets": [
-      "dist/server.js"
-    ],
-    "targets": [
-      "node18-win-x64",
-      "node18-linux-x64",
-      "node18-macos-x64",
-      "node18-macos-arm64"
-    ],
-    "outputPath": "build"
+      "dist/server.js",
+      "node_modules/swagger-ui-dist/**/*"
+    ]
   },
   "repository": {
     "type": "git",
@@ -47,6 +41,7 @@
     "@types/uuid": "^10.0.0",
     "express": "^4.18.2",
     "express-mcp-handler": "^0.3.0",
+    "helmet": "^8.1.0",
     "http-proxy": "^1.18.1",
     "http-proxy-middleware": "^3.0.5",
     "puppeteer-core": "^24.26.1",
@@ -56,7 +51,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
-    "@types/node": "^20.10.0",
+    "@types/node": "^20.19.24",
     "@types/supertest": "^6.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.6",
@@ -65,9 +60,12 @@
     "esbuild": "^0.25.11",
     "nodemon": "^3.0.2",
     "npm-run-all": "^4.1.5",
+    "pkg": "^5.8.1",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.3.0",
-    "vitest": "^4.0.4"
+    "vitest": "^4.0.4",
+    "zx": "^8.8.5"
   }
 }
