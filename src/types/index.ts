@@ -42,6 +42,30 @@ export interface EvalRequest {
   script: string;
 }
 
+export interface FocusRequest {
+  selector: string;
+}
+
+export interface WaitForSelectorRequest {
+  selector: string;
+  timeout?: number;
+  visible?: boolean;
+}
+
+export interface WaitForFunctionRequest {
+  functionScript: string;
+  timeout?: number;
+}
+
+export interface WaitForNavigationRequest {
+  timeout?: number;
+  waitUntil?: string;
+}
+
+export interface ReloadRequest {
+  waitUntil?: string;
+}
+
 export interface ConfigUpdateRequest {
   chromePath?: string;
   port?: number;

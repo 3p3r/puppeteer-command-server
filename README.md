@@ -4,15 +4,17 @@ Exposes basic browser automation through HTTP and MCP for generative UI apps.
 
 ## Methodology
 
-This project on launch exposes two functional endpoints:
+This project on launch exposes the following endpoints:
 
 - a RESTful API HTTP server
+- a Swagger docs server
 - a MCP server
 
 For example:
 
 - `http://localhost:3000/api`: the RESTful API
 - `http://localhost:3000/mcp`: the MCP endpoint
+- `http://localhost:3000/docs`: the Swagger docs endpoint
 
 Port is configurable with the `PCS_PORT` environment variable (default: `3000`).
 
@@ -32,17 +34,31 @@ Assuming access to the path of the Chrome executable, the server offers this API
 - `tabs/select/:tabId`: selects an option in a dropdown at specified selector in the tab with the given ID
 - `tabs/eval/:tabId`: evaluates JavaScript in the context of the tab with the given ID
 - `tabs/close/:tabId`: closes the tab with the given ID
+- `tabs/bringToFront/:tabId`: brings the tab with the given ID to front
+- `tabs/focus/:tabId`: focuses on a specific element via selector in the tab with the given ID
+- `tabs/goBack/:tabId`: navigates back in browser history for the tab with the given ID
+- `tabs/goForward/:tabId`: navigates forward in browser history for the tab with the given ID
+- `tabs/reload/:tabId`: reloads the tab with the given ID
+- `tabs/waitForSelector/:tabId`: waits for a selector to appear in the tab with the given ID
+- `tabs/waitForFunction/:tabId`: waits for a function to return truthy value in the tab with the given ID
+- `tabs/waitForNavigation/:tabId`: waits for navigation to complete in the tab with the given ID
+- `tabs/url/:tabId`: gets the current URL of the tab with the given ID
 - `config/get`: gets the current configuration (e.g., Chrome path)
 - `config/set`: sets configuration options (e.g., Chrome path)
 
 Browser automation happens through Puppeteer. Session management is automatic.
 
-A Swagger endpoint is available at `/docs` for easy exploration of the RESTful API.
-
 The server is implemented in Express and Typescript and all routes are protected
-with authentication. All routes are protected with better-auth.
+with a basic api key authentication for now.
 
-Strategy of better-auth is a simple static list of users for now.
+To interact and test the MCP server, you can use:
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+And in the UI, ensure "Transport Type" is set to `Streamable HTTP` and also add
+the API key in `.secret` to the headers, with key name: `x-api-key`.
 
 ## Platforms
 

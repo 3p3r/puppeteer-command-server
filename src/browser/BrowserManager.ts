@@ -247,6 +247,128 @@ export class BrowserManager {
     }
   }
 
+  async bringToFront(tabId: string): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      await tab.page.bringToFront();
+    } catch (error) {
+      throw new BrowserError(`Failed to bring tab to front: ${error}`);
+    }
+  }
+
+  async focusElement(tabId: string, selector: string): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      await tab.page.$eval(selector, (el: any) => el.focus());
+    } catch (error) {
+      throw new BrowserError(`Failed to focus element: ${error}`);
+    }
+  }
+
+  async goBack(tabId: string): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      await tab.page.goBack({ waitUntil: 'networkidle2' });
+    } catch (error) {
+      throw new BrowserError(`Failed to go back: ${error}`);
+    }
+  }
+
+  async goForward(tabId: string): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      await tab.page.goForward({ waitUntil: 'networkidle2' });
+    } catch (error) {
+      throw new BrowserError(`Failed to go forward: ${error}`);
+    }
+  }
+
+  async reloadTab(tabId: string, waitUntil?: string): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      await tab.page.reload({ waitUntil: (waitUntil || 'networkidle2') as any });
+    } catch (error) {
+      throw new BrowserError(`Failed to reload tab: ${error}`);
+    }
+  }
+
+  async waitForSelector(tabId: string, selector: string, options?: { timeout?: number; visible?: boolean }): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      await tab.page.waitForSelector(selector, options);
+    } catch (error) {
+      throw new BrowserError(`Failed to wait for selector: ${error}`);
+    }
+  }
+
+  async waitForFunction(tabId: string, fn: string, options?: { timeout?: number }): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      await tab.page.waitForFunction(fn, options);
+    } catch (error) {
+      throw new BrowserError(`Failed to wait for function: ${error}`);
+    }
+  }
+
+  async waitForNavigation(tabId: string, options?: { timeout?: number; waitUntil?: string }): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      const waitOptions: any = {};
+      if (options?.timeout) waitOptions.timeout = options.timeout;
+      if (options?.waitUntil) waitOptions.waitUntil = options.waitUntil;
+      else waitOptions.waitUntil = 'networkidle2';
+
+      await tab.page.waitForNavigation(waitOptions);
+    } catch (error) {
+      throw new BrowserError(`Failed to wait for navigation: ${error}`);
+    }
+  }
+
+  async getTabUrl(tabId: string): Promise<string> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      return tab.page.url();
+    } catch (error) {
+      throw new BrowserError(`Failed to get tab URL: ${error}`);
+    }
+  }
+
   async getTabs(): Promise<TabInfo[]> {
     const tabs: TabInfo[] = [];
 

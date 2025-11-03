@@ -72,6 +72,60 @@ describe('Tab Routes - Request Validation', () => {
       }
       return res.json({ success: true });
     });
+
+    app.post('/api/tabs/bringToFront/:tabId', (req, res) => {
+      return res.json({ success: true });
+    });
+
+    app.post('/api/tabs/focus/:tabId', (req, res) => {
+      if (!req.body.selector) {
+        return res.status(400).json({
+          success: false,
+          error: 'Selector is required'
+        });
+      }
+      return res.json({ success: true });
+    });
+
+    app.post('/api/tabs/goBack/:tabId', (req, res) => {
+      return res.json({ success: true });
+    });
+
+    app.post('/api/tabs/goForward/:tabId', (req, res) => {
+      return res.json({ success: true });
+    });
+
+    app.post('/api/tabs/reload/:tabId', (req, res) => {
+      return res.json({ success: true });
+    });
+
+    app.post('/api/tabs/waitForSelector/:tabId', (req, res) => {
+      if (!req.body.selector) {
+        return res.status(400).json({
+          success: false,
+          error: 'Selector is required'
+        });
+      }
+      return res.json({ success: true });
+    });
+
+    app.post('/api/tabs/waitForFunction/:tabId', (req, res) => {
+      if (!req.body.functionScript) {
+        return res.status(400).json({
+          success: false,
+          error: 'Function script is required'
+        });
+      }
+      return res.json({ success: true });
+    });
+
+    app.post('/api/tabs/waitForNavigation/:tabId', (req, res) => {
+      return res.json({ success: true });
+    });
+
+    app.get('/api/tabs/url/:tabId', (req, res) => {
+      return res.json({ success: true, data: { url: 'https://example.com' } });
+    });
   });
 
   describe('Authentication', () => {
@@ -160,6 +214,126 @@ describe('Tab Routes - Request Validation', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Script is required');
+    });
+
+    it('should return 200 for valid bringToFront request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/bringToFront/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 400 for missing selector in focus', async () => {
+      const response = await request(app)
+        .post('/api/tabs/focus/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Selector is required');
+    });
+
+    it('should return 200 for valid focus request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/focus/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({ selector: '#input' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 200 for valid goBack request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/goBack/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 200 for valid goForward request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/goForward/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 200 for valid reload request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/reload/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 400 for missing selector in waitForSelector', async () => {
+      const response = await request(app)
+        .post('/api/tabs/waitForSelector/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Selector is required');
+    });
+
+    it('should return 200 for valid waitForSelector request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/waitForSelector/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({ selector: '.loaded', timeout: 5000 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 400 for missing functionScript in waitForFunction', async () => {
+      const response = await request(app)
+        .post('/api/tabs/waitForFunction/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Function script is required');
+    });
+
+    it('should return 200 for valid waitForFunction request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/waitForFunction/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({ functionScript: '() => document.readyState === "complete"' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 200 for valid waitForNavigation request', async () => {
+      const response = await request(app)
+        .post('/api/tabs/waitForNavigation/test-tab')
+        .set('x-api-key', 'test-key')
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 200 with URL for valid url request', async () => {
+      const response = await request(app)
+        .get('/api/tabs/url/test-tab')
+        .set('x-api-key', 'test-key');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.url).toBe('https://example.com');
     });
   });
 });

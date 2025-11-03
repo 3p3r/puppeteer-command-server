@@ -8,6 +8,11 @@ import {
   FillRequest,
   SelectRequest,
   EvalRequest,
+  FocusRequest,
+  WaitForSelectorRequest,
+  WaitForFunctionRequest,
+  WaitForNavigationRequest,
+  ReloadRequest,
   ApiResponse,
   TabNotFoundError
 } from '../types/index.js';
@@ -624,6 +629,515 @@ router.delete('/close/:tabId', async (req: Request, res: Response) => {
     await browserManager.closeTab(tabId);
 
     return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/bringToFront/{tabId}:
+ *   post:
+ *     summary: Bring tab to front
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Tab brought to front successfully
+ */
+router.post('/bringToFront/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.bringToFront(tabId);
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/focus/{tabId}:
+ *   post:
+ *     summary: Focus element in tab
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               selector:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Element focused successfully
+ */
+router.post('/focus/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+    const request: FocusRequest = req.body;
+
+    if (!request.selector) {
+      return res.status(400).json({
+        success: false,
+        error: 'Selector is required'
+      });
+    }
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.focusElement(tabId, request.selector);
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/goBack/{tabId}:
+ *   post:
+ *     summary: Navigate back in browser history
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Navigated back successfully
+ */
+router.post('/goBack/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.goBack(tabId);
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/goForward/{tabId}:
+ *   post:
+ *     summary: Navigate forward in browser history
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Navigated forward successfully
+ */
+router.post('/goForward/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.goForward(tabId);
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/reload/{tabId}:
+ *   post:
+ *     summary: Reload tab
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               waitUntil:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tab reloaded successfully
+ */
+router.post('/reload/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+    const request: ReloadRequest = req.body;
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.reloadTab(tabId, request.waitUntil);
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/waitForSelector/{tabId}:
+ *   post:
+ *     summary: Wait for selector to appear in tab
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               selector:
+ *                 type: string
+ *               timeout:
+ *                 type: number
+ *               visible:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Selector found successfully
+ */
+router.post('/waitForSelector/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+    const request: WaitForSelectorRequest = req.body;
+
+    if (!request.selector) {
+      return res.status(400).json({
+        success: false,
+        error: 'Selector is required'
+      });
+    }
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.waitForSelector(tabId, request.selector, {
+      timeout: request.timeout,
+      visible: request.visible
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/waitForFunction/{tabId}:
+ *   post:
+ *     summary: Wait for function to return truthy value
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               functionScript:
+ *                 type: string
+ *               timeout:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Function returned truthy value
+ */
+router.post('/waitForFunction/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+    const request: WaitForFunctionRequest = req.body;
+
+    if (!request.functionScript) {
+      return res.status(400).json({
+        success: false,
+        error: 'Function script is required'
+      });
+    }
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.waitForFunction(tabId, request.functionScript, {
+      timeout: request.timeout
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/waitForNavigation/{tabId}:
+ *   post:
+ *     summary: Wait for navigation to complete
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               timeout:
+ *                 type: number
+ *               waitUntil:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Navigation completed successfully
+ */
+router.post('/waitForNavigation/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+    const request: WaitForNavigationRequest = req.body;
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    await browserManager.waitForNavigation(tabId, {
+      timeout: request.timeout,
+      waitUntil: request.waitUntil
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tabs/url/{tabId}:
+ *   get:
+ *     summary: Get current URL of tab
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: URL retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     url:
+ *                       type: string
+ */
+router.get('/url/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    const url = await browserManager.getTabUrl(tabId);
+
+    const response: ApiResponse<{ url: string }> = {
+      success: true,
+      data: { url }
+    };
+
+    return res.json(response);
   } catch (error) {
     if (error instanceof TabNotFoundError) {
       return res.status(404).json({

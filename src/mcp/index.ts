@@ -244,16 +244,204 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
         };
       }
 
-      const updatedConfig = updateConfig({
-        chromePath: args.chromePath ?? undefined,
-        port: args.port
-      });
+      const configUpdate: any = {};
+      if (args.chromePath !== undefined) configUpdate.chromePath = args.chromePath;
+      if (args.port !== undefined) configUpdate.port = args.port;
+      const updatedConfig = updateConfig(configUpdate);
 
       return {
         content: [
           {
             type: 'text',
             text: JSON.stringify({ success: true, data: updatedConfig })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_bring_to_front',
+    'Bring a tab to the front',
+    {
+      tabId: z.string().describe('Tab ID')
+    },
+    async args => {
+      await browserManager.bringToFront(args.tabId);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_focus_element',
+    'Focus on an element in a tab',
+    {
+      tabId: z.string().describe('Tab ID'),
+      selector: z.string().describe('CSS selector of element to focus')
+    },
+    async args => {
+      await browserManager.focusElement(args.tabId, args.selector);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_go_back',
+    'Navigate back in browser history',
+    {
+      tabId: z.string().describe('Tab ID')
+    },
+    async args => {
+      await browserManager.goBack(args.tabId);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_go_forward',
+    'Navigate forward in browser history',
+    {
+      tabId: z.string().describe('Tab ID')
+    },
+    async args => {
+      await browserManager.goForward(args.tabId);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_reload',
+    'Reload a tab',
+    {
+      tabId: z.string().describe('Tab ID'),
+      waitUntil: z.string().optional().describe('When to consider navigation complete (networkidle2, load, etc.)')
+    },
+    async args => {
+      await browserManager.reloadTab(args.tabId, args.waitUntil);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_wait_for_selector',
+    'Wait for a selector to appear in a tab',
+    {
+      tabId: z.string().describe('Tab ID'),
+      selector: z.string().describe('CSS selector to wait for'),
+      timeout: z.number().optional().describe('Timeout in milliseconds'),
+      visible: z.boolean().optional().describe('Wait for element to be visible')
+    },
+    async args => {
+      const options: any = {};
+      if (args.timeout !== undefined) options.timeout = args.timeout;
+      if (args.visible !== undefined) options.visible = args.visible;
+      await browserManager.waitForSelector(args.tabId, args.selector, options);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_wait_for_function',
+    'Wait for a function to return truthy value',
+    {
+      tabId: z.string().describe('Tab ID'),
+      functionScript: z.string().describe('JavaScript function to wait for'),
+      timeout: z.number().optional().describe('Timeout in milliseconds')
+    },
+    async args => {
+      const options: any = {};
+      if (args.timeout !== undefined) options.timeout = args.timeout;
+      await browserManager.waitForFunction(args.tabId, args.functionScript, options);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_wait_for_navigation',
+    'Wait for navigation to complete',
+    {
+      tabId: z.string().describe('Tab ID'),
+      timeout: z.number().optional().describe('Timeout in milliseconds'),
+      waitUntil: z.string().optional().describe('When to consider navigation complete (networkidle2, load, etc.)')
+    },
+    async args => {
+      const options: any = {};
+      if (args.timeout !== undefined) options.timeout = args.timeout;
+      if (args.waitUntil !== undefined) options.waitUntil = args.waitUntil;
+      await browserManager.waitForNavigation(args.tabId, options);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  server.tool(
+    'browser_get_url',
+    'Get the current URL of a tab',
+    {
+      tabId: z.string().describe('Tab ID')
+    },
+    async args => {
+      const url = await browserManager.getTabUrl(args.tabId);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true, url })
           }
         ]
       };
