@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { BrowserManager } from '../browser/BrowserManager.js';
+import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
 import {
   OpenTabRequest,
   NavigateRequest,
@@ -18,7 +18,7 @@ const router = Router();
 let browserManager: BrowserManager;
 
 export function initializeTabsRoutes(chromePath?: string | null): void {
-  browserManager = new BrowserManager(chromePath);
+  browserManager = BrowserManagerSingleton(chromePath);
 }
 
 /**

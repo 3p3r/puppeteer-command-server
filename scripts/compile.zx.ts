@@ -66,15 +66,15 @@ async function main() {
   if (go) {
     console.log(chalk.blue(`Found Go at: ${go}`));
     console.log(chalk.blue('Compiling Go wrapper binaries...'));
-    
+
     const SIG_BUILD_OUTPUT_DIR = path.join(BUILD_DIR, 'sig');
     await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}`;
     await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/linux`;
     await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/mac`;
     await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/win`;
-    
+
     const repoRoot = path.join(__dirname, '..');
-    
+
     // Build for Linux
     await within(async () => {
       $.cwd = repoRoot;
@@ -94,7 +94,7 @@ async function main() {
         })()
       ]);
     });
-    
+
     console.log(chalk.green('Go wrapper binaries compiled successfully.'));
   } else {
     console.log(chalk.yellow('Go not found. Skipping Go wrapper compilation.'));

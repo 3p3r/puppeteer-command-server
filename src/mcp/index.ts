@@ -1,12 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { BrowserManager } from '../browser/BrowserManager.js';
+import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
 import { loadConfig, updateConfig } from '../config/index.js';
 import { z } from 'zod';
 
-let browserManager: BrowserManager;
-
 export function initializeMcpServer(chromePath?: string | null): McpServer {
-  browserManager = new BrowserManager(chromePath);
+  const browserManager = BrowserManagerSingleton(chromePath);
 
   const server = new McpServer({
     name: 'puppeteer-command-server',

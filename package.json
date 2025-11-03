@@ -6,7 +6,7 @@
     "compile": "NODE_OPTIONS='--import tsx' zx scripts/compile.zx.ts",
     "bundle": "NODE_OPTIONS='--import tsx' zx scripts/bundle.zx.ts",
     "build": "npm-run-all bundle compile",
-    "dev": "nodemon --exec ts-node src/server.ts",
+    "dev": "tsx src/server.ts",
     "start": "node dist/server.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
@@ -20,22 +20,13 @@
     "check:fix": "biome check --write ."
   },
   "pkg": {
-    "assets": [
-      "dist/server.js",
-      "src/routes/*.ts",
-      "node_modules/swagger-ui-dist/**/*"
-    ]
+    "assets": ["dist/server.js", "src/routes/*.ts", "node_modules/swagger-ui-dist/**/*"]
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/3p3r/puppeteer-command-server.git"
   },
-  "keywords": [
-    "puppeteer",
-    "automation",
-    "mcp",
-    "browser"
-  ],
+  "keywords": ["puppeteer", "automation", "mcp", "browser"],
   "author": "Sepehr Laal",
   "license": "MIT",
   "bugs": {
@@ -49,14 +40,17 @@
     "express-mcp-handler": "^0.3.0",
     "helmet": "^8.1.0",
     "http-proxy": "^1.18.1",
+    "lodash": "^4.17.21",
     "puppeteer-core": "^24.26.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/express": "^4.17.21",
+    "@types/lodash": "^4.17.20",
     "@types/node": "^20.19.24",
     "@types/supertest": "^6.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
@@ -64,11 +58,9 @@
     "@vitest/coverage-v8": "^4.0.4",
     "@vitest/ui": "^4.0.4",
     "esbuild": "^0.25.11",
-    "nodemon": "^3.0.2",
     "npm-run-all": "^4.1.5",
     "pkg": "^5.8.1",
     "supertest": "^6.3.3",
-    "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.3.0",
     "vitest": "^4.0.4",

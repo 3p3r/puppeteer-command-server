@@ -6,12 +6,13 @@ const CONFIG_FILE = path.join(process.cwd(), 'config.json');
 
 function getDefaultPort(): number {
   // @ts-ignore
-  return process.env.PCS_PORT ? +process.env.PCS_PORT : 3000;
+  const port = 'PCS_PORT' in process.env ? +process.env.PCS_PORT : 3000;
+  return Number.isInteger(port) && port > 0 && port < 65536 ? port : 3000;
 }
 
 const DEFAULT_CONFIG: Config = {
   chromePath: null,
-  port: getDefaultPort(),
+  port: getDefaultPort()
 };
 
 export function loadConfig(): Config {

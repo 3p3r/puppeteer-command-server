@@ -1,10 +1,16 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { randomUUID } from 'crypto';
-import { type TabInfo, type OpenTabRequest, BrowserError, TabNotFoundError } from '../types/index.js';
+import {
+  type TabInfo,
+  type OpenTabRequest,
+  BrowserError,
+  TabNotFoundError
+} from '../types/index.js';
 import { findChromeBrowser } from '../chrome/FindChrome.js';
 import os from 'os';
 import path from 'path';
 import assert from 'assert';
+import memoize from 'lodash/memoize.js';
 
 export class BrowserManager {
   private browsers: Map<boolean, Browser | null> = new Map();
@@ -270,3 +276,7 @@ export class BrowserManager {
     this.chromePath = chromePath;
   }
 }
+
+export const BrowserManagerSingleton = memoize(
+  (chromePath?: string | null) => new BrowserManager(chromePath)
+);

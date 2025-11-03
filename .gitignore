@@ -88,7 +88,6 @@ jspm_packages/
 .tern-port
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
