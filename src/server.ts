@@ -5,7 +5,6 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import { authenticateApiKey } from './auth/index.js';
 import { loadConfig } from './config/index.js';
 import { tabsRouter, initializeTabsRoutes } from './routes/tabs.js';
-import { configRouter } from './routes/config.js';
 import { initializeMcpServer } from './mcp/index.js';
 import { statelessHandler } from 'express-mcp-handler';
 import path from 'path';
@@ -65,10 +64,6 @@ const swaggerSpec = swaggerJsdoc({
       {
         name: 'Tabs',
         description: 'Browser tab operations'
-      },
-      {
-        name: 'Config',
-        description: 'Configuration management'
       }
     ]
   },
@@ -88,7 +83,6 @@ initializeTabsRoutes(config.chromePath);
 
 // API routes with authentication
 app.use('/api/tabs', authenticateApiKey, tabsRouter);
-app.use('/api/config', authenticateApiKey, configRouter);
 
 // Reverse proxy for browser tabs
 app.use('/proxy/:tabId', authenticateApiKey, (_req, res) => {

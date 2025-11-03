@@ -43,8 +43,6 @@ Assuming access to the path of the Chrome executable, the server offers this API
 - `tabs/waitForFunction/:tabId`: waits for a function to return truthy value in the tab with the given ID
 - `tabs/waitForNavigation/:tabId`: waits for navigation to complete in the tab with the given ID
 - `tabs/url/:tabId`: gets the current URL of the tab with the given ID
-- `config/get`: gets the current configuration (e.g., Chrome path)
-- `config/set`: sets configuration options (e.g., Chrome path)
 
 Browser automation happens through Puppeteer. Session management is automatic.
 

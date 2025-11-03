@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
-import { loadConfig, updateConfig } from '../config/index.js';
 import { z } from 'zod';
 
 export function initializeMcpServer(chromePath?: string | null): McpServer {
@@ -203,57 +202,6 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
           {
             type: 'text',
             text: JSON.stringify({ success: true })
-          }
-        ]
-      };
-    }
-  );
-
-  server.tool('browser_get_config', 'Get current configuration', {}, async () => {
-    const config = loadConfig();
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({ success: true, data: config })
-        }
-      ]
-    };
-  });
-
-  server.tool(
-    'browser_set_config',
-    'Update configuration',
-    {
-      chromePath: z.string().nullable().optional().describe('Path to Chrome executable'),
-      port: z.number().optional().describe('Server port (1-65535)')
-    },
-    async args => {
-      // Validate port if provided
-      if (args.port !== undefined && (args.port < 1 || args.port > 65535)) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: false,
-                error: 'Port must be between 1 and 65535'
-              })
-            }
-          ]
-        };
-      }
-
-      const configUpdate: any = {};
-      if (args.chromePath !== undefined) configUpdate.chromePath = args.chromePath;
-      if (args.port !== undefined) configUpdate.port = args.port;
-      const updatedConfig = updateConfig(configUpdate);
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ success: true, data: updatedConfig })
           }
         ]
       };
