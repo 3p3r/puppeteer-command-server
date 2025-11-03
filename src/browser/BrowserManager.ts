@@ -226,6 +226,16 @@ export class BrowserManager {
     try {
       await tab.page.close();
       this.tabs.delete(tabId);
+      // close the browser if no tabs are left
+      const headless = tab.visible;
+      const anyTabsLeft = Array.from(this.tabs.values()).some(t => t.visible === headless);
+      if (!anyTabsLeft) {
+        const browser = this.browsers.get(headless);
+        if (browser) {
+          await browser.close();
+          this.browsers.set(headless, null);
+        }
+      }
     } catch (error) {
       throw new BrowserError(`Failed to close tab: ${error}`);
     }
