@@ -64,6 +64,13 @@ create unique signatures for production.
 Resulting binaries are entirely self-contained and do not require any external
 dependencies beyond the target platform's standard libraries.
 
+## Environment
+
+- `Node.js` version 18+ and `npm`
+- `Go` version 1.16+ (for signature generation)
+- `lipo` (MacOS only) or `llvm-lipo` (non MacOS)
+- `upx` (for executable compression)
+
 ## Implementation
 
 Code is organized in Object Oriented manner with classes. Logic is maintained at
