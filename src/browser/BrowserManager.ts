@@ -2,6 +2,7 @@ import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { randomUUID } from 'crypto';
 import { type TabInfo, type OpenTabRequest, BrowserError, TabNotFoundError } from '../types/index.js';
 import { findChromeBrowser } from '../chrome/FindChrome.js';
+import os from 'os';
 import path from 'path';
 import assert from 'assert';
 
@@ -29,10 +30,12 @@ export class BrowserManager {
         '--no-zygote',
         '--disable-gpu',
         '--mute-audio',
-        `--user-data-dir=${path.resolve(process.cwd(), '.browser')}`
+        `--user-data-dir=${path.resolve(os.homedir(), '.pcs-browser')}`
+        // `--user-data-dir=${path.resolve(process.cwd(), '.browser')}`
       ];
 
       const browser = await puppeteer.launch({
+        defaultViewport: null,
         executablePath,
         headless,
         args
@@ -94,9 +97,6 @@ export class BrowserManager {
       const tabId = randomUUID();
 
       this.tabs.set(tabId, { page, visible: headless });
-
-      // Set viewport
-      await page.setViewport({ width: 1280, height: 720 });
 
       // Navigate to URL if provided
       if (request.url) {
