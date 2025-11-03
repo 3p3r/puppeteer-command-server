@@ -1,22 +1,20 @@
 # puppeteer-command-server
 
-Exposes basic browser automation through HTTP and MCP
+Exposes basic browser automation through HTTP and MCP for generative UI apps.
 
 ## Methodology
 
-This project on launch exposes three functional endpoints:
+This project on launch exposes two functional endpoints:
 
-- a reverse HTTP proxy to browser tabs
-- a RESTful HTTP server
+- a RESTful API HTTP server
 - a MCP server
 
 For example:
 
 - `http://localhost:3000/api`: the RESTful API
 - `http://localhost:3000/mcp`: the MCP endpoint
-- `http://localhost:3000/proxy/:tabId/:requestUrl`: the reverse HTTP proxy URL to the tab with the given ID
 
-Port is configurable with the `PORT` environment variable (default: `3000`).
+Port is configurable with the `PCS_PORT` environment variable (default: `3000`).
 
 On running the server, it attempts to find the first available Chrome or Chrome
 adjacent installation on the host machine. This setting can be updated over HTTP
@@ -55,9 +53,9 @@ Windows, WSL, Linux, and MacOS.
 
 ## Distribution
 
-The project is coded in Typescript and compiled into native binaries using Nexe.
+The project is coded in Typescript and compiled into native binaries using PKG.
 
-When Nexe is used to compile the project, executables are generated for Windows,
+When PKG is used to compile the project, executables are generated for Windows,
 Linux, and MacOS operating systems. The Linux binary runs on WSL as well.
 
 After that, the executables are compressed and obfuscated to reduce size and
@@ -74,13 +72,12 @@ a level that the code is readable and easy to reason about.
 ## References
 
 - <https://github.com/expressjs/express>
-- <https://github.com/http-party/node-http-proxy>
 - <https://github.com/better-auth/better-auth>
 - <https://www.better-auth.com/docs/integrations/express>
 - <https://www.npmjs.com/package/puppeteer-core>
 - <https://github.com/mbalabash/find-chrome-bin>
 - <https://github.com/jellydn/next-swagger-doc>
-- <https://github.com/nexe/nexe>
+- <https://github.com/vercel/pkg>
 - <https://github.com/upx/upx>
 
 ## License

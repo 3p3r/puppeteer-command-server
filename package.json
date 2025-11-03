@@ -20,13 +20,22 @@
     "check:fix": "biome check --write ."
   },
   "pkg": {
-    "assets": ["dist/server.js", "src/routes/*.ts", "node_modules/swagger-ui-dist/**/*"]
+    "assets": [
+      "dist/server.js",
+      "src/routes/*.ts",
+      "node_modules/swagger-ui-dist/**/*"
+    ]
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/3p3r/puppeteer-command-server.git"
   },
-  "keywords": ["puppeteer", "automation", "mcp", "browser"],
+  "keywords": [
+    "puppeteer",
+    "automation",
+    "mcp",
+    "browser"
+  ],
   "author": "Sepehr Laal",
   "license": "MIT",
   "bugs": {
@@ -35,13 +44,11 @@
   "homepage": "https://github.com/3p3r/puppeteer-command-server#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.2",
-    "@types/http-proxy-middleware": "^0.19.3",
     "@types/uuid": "^10.0.0",
     "express": "^4.18.2",
     "express-mcp-handler": "^0.3.0",
     "helmet": "^8.1.0",
     "http-proxy": "^1.18.1",
-    "http-proxy-middleware": "^3.0.5",
     "puppeteer-core": "^24.26.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",

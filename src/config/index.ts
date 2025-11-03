@@ -1,12 +1,17 @@
 import fs from 'fs';
 import path from 'path';
-import { Config } from '../types';
+import type { Config } from '../types';
 
 const CONFIG_FILE = path.join(process.cwd(), 'config.json');
 
+function getDefaultPort(): number {
+  // @ts-ignore
+  return process.env.PCS_PORT ? +process.env.PCS_PORT : 3000;
+}
+
 const DEFAULT_CONFIG: Config = {
   chromePath: null,
-  port: 3000
+  port: getDefaultPort(),
 };
 
 export function loadConfig(): Config {
