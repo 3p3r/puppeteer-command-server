@@ -8,7 +8,7 @@ describe('Tab Routes - Request Validation', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Simple auth middleware for testing
     app.use((req, res, next) => {
       const apiKey = req.headers['x-api-key'];

@@ -1,4 +1,4 @@
-import helmet from "helmet";
+import helmet from 'helmet';
 import express from 'express';
 // import { createProxyMiddleware } from 'http-proxy-middleware';
 import swaggerUi from 'swagger-ui-express';
@@ -9,7 +9,7 @@ import { tabsRouter, initializeTabsRoutes } from './routes/tabs.js';
 import { configRouter } from './routes/config.js';
 import { initializeMcpServer } from './mcp/index.js';
 import { sseHandlers } from 'express-mcp-handler';
-import path from "path";
+import path from 'path';
 
 const app = express();
 
@@ -18,9 +18,11 @@ delete cspDefaults['upgrade-insecure-requests'];
 
 // fixes swagger ui in prod
 // https://github.com/scottie1984/swagger-ui-express/issues/237
-app.use(helmet({
-  contentSecurityPolicy: { directives: cspDefaults }
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: { directives: cspDefaults }
+  })
+);
 
 // Load configuration
 const config = loadConfig();
@@ -38,44 +40,49 @@ const swaggerSpec = swaggerJsdoc({
     info: {
       title: 'Puppeteer Command Server',
       version: '1.0.0',
-      description: 'Browser automation server with HTTP and MCP endpoints',
+      description: 'Browser automation server with HTTP and MCP endpoints'
     },
     servers: [
       {
         url: `http://localhost:${config.port}`,
-        description: 'Development server',
-      },
+        description: 'Development server'
+      }
     ],
     components: {
       securitySchemes: {
         ApiKeyAuth: {
           type: 'apiKey',
           in: 'header',
-          name: 'x-api-key',
-        },
-      },
+          name: 'x-api-key'
+        }
+      }
     },
     security: [
       {
-        ApiKeyAuth: [],
-      },
+        ApiKeyAuth: []
+      }
     ],
     tags: [
       {
         name: 'Tabs',
-        description: 'Browser tab operations',
+        description: 'Browser tab operations'
       },
       {
         name: 'Config',
-        description: 'Configuration management',
-      },
-    ],
+        description: 'Configuration management'
+      }
+    ]
   },
-  apis: [`${baseApiSearchPath}/*.ts`],
+  apis: [`${baseApiSearchPath}/*.ts`]
 });
 
 // Swagger documentation
-app.use('/docs', express.static(path.resolve(__dirname, `../node_modules/swagger-ui-dist/`), { index: false }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(
+  '/docs',
+  express.static(path.resolve(__dirname, `../node_modules/swagger-ui-dist/`), { index: false }),
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
 
 // Initialize browser manager and routes
 initializeTabsRoutes(config.chromePath);
@@ -98,17 +105,14 @@ app.use('/proxy/:tabId', authenticateApiKey, (_req, res) => {
 const mcpServer = initializeMcpServer(config.chromePath);
 
 // MCP handlers with authentication
-const mcpHandlers = sseHandlers(
-  () => mcpServer,
-  {
-    onError: (error: Error, sessionId?: string) => {
-      console.error(`[MCP][${sessionId || 'unknown'}] Error:`, error);
-    },
-    onClose: (sessionId: string) => {
-      console.log(`[MCP] Session closed: ${sessionId}`);
-    },
+const mcpHandlers = sseHandlers(() => mcpServer, {
+  onError: (error: Error, sessionId?: string) => {
+    console.error(`[MCP][${sessionId || 'unknown'}] Error:`, error);
+  },
+  onClose: (sessionId: string) => {
+    console.log(`[MCP] Session closed: ${sessionId}`);
   }
-);
+});
 
 // Apply authentication to MCP endpoints
 app.use('/mcp/sse', authenticateApiKey, mcpHandlers.getHandler);
@@ -116,23 +120,25 @@ app.use('/mcp/messages', authenticateApiKey, mcpHandlers.postHandler);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
 });
 
 // Error handling middleware
-app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Unhandled error:', error);
-  
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error',
-    code: 'INTERNAL_ERROR'
-  });
-});
+app.use(
+  (error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('Unhandled error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+);
 
 // 404 handler
 app.use('*', (_req, res) => {

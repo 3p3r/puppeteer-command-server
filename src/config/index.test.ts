@@ -13,7 +13,7 @@ describe('Configuration Management', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup fs mocks
     mockFs.existsSync.mockReturnValue(false);
     mockFs.readFileSync.mockImplementation(() => {
@@ -29,9 +29,9 @@ describe('Configuration Management', () => {
   describe('loadConfig', () => {
     it('should return default config when file does not exist', () => {
       mockFs.existsSync.mockReturnValue(false);
-      
+
       const config = loadConfig();
-      
+
       expect(config).toEqual({
         chromePath: null,
         port: 3000
@@ -43,9 +43,9 @@ describe('Configuration Management', () => {
       const configData = { chromePath: '/usr/bin/chrome', port: 4000 };
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(JSON.stringify(configData));
-      
+
       const config = loadConfig();
-      
+
       expect(config).toEqual(configData);
       expect(mockFs.readFileSync).toHaveBeenCalledWith(CONFIG_FILE, 'utf8');
     });
@@ -54,9 +54,9 @@ describe('Configuration Management', () => {
       const partialConfig = { port: 4000 };
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(JSON.stringify(partialConfig));
-      
+
       const config = loadConfig();
-      
+
       expect(config).toEqual({
         chromePath: null,
         port: 4000
@@ -66,9 +66,9 @@ describe('Configuration Management', () => {
     it('should handle malformed JSON gracefully', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue('invalid json');
-      
+
       const config = loadConfig();
-      
+
       expect(config).toEqual({
         chromePath: null,
         port: 3000
@@ -79,9 +79,9 @@ describe('Configuration Management', () => {
   describe('saveConfig', () => {
     it('should save config to file with proper formatting', () => {
       const config = { chromePath: '/usr/bin/chrome', port: 4000 };
-      
+
       saveConfig(config);
-      
+
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         CONFIG_FILE,
         JSON.stringify(config, null, 2)
@@ -93,7 +93,7 @@ describe('Configuration Management', () => {
       mockFs.writeFileSync.mockImplementation(() => {
         throw new Error('Write error');
       });
-      
+
       expect(() => saveConfig(config)).toThrow('Failed to save config: Error: Write error');
     });
   });
@@ -102,12 +102,12 @@ describe('Configuration Management', () => {
     it('should update config and save to file', () => {
       const existingConfig = { chromePath: null, port: 3000 };
       const updates = { chromePath: '/usr/bin/chrome', port: 4000 };
-      
+
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(JSON.stringify(existingConfig));
-      
+
       const result = updateConfig(updates);
-      
+
       expect(result).toEqual({
         chromePath: '/usr/bin/chrome',
         port: 4000
@@ -121,12 +121,12 @@ describe('Configuration Management', () => {
     it('should handle partial updates', () => {
       const existingConfig = { chromePath: '/usr/bin/chrome', port: 3000 };
       const updates = { port: 4000 };
-      
+
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(JSON.stringify(existingConfig));
-      
+
       const result = updateConfig(updates);
-      
+
       expect(result).toEqual({
         chromePath: '/usr/bin/chrome',
         port: 4000
@@ -135,11 +135,11 @@ describe('Configuration Management', () => {
 
     it('should work when config file does not exist', () => {
       const updates = { chromePath: '/usr/bin/chrome', port: 4000 };
-      
+
       mockFs.existsSync.mockReturnValue(false);
-      
+
       const result = updateConfig(updates);
-      
+
       expect(result).toEqual({
         chromePath: '/usr/bin/chrome',
         port: 4000

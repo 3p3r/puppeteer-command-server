@@ -1,15 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { BrowserManager } from '../browser/BrowserManager.js';
-import { 
-  OpenTabRequest, 
-  NavigateRequest, 
-  ClickRequest, 
-  HoverRequest, 
-  FillRequest, 
-  SelectRequest, 
+import {
+  OpenTabRequest,
+  NavigateRequest,
+  ClickRequest,
+  HoverRequest,
+  FillRequest,
+  SelectRequest,
   EvalRequest,
   ApiResponse,
-  TabNotFoundError 
+  TabNotFoundError
 } from '../types/index.js';
 
 const router = Router();
@@ -59,7 +59,7 @@ export function initializeTabsRoutes(chromePath?: string | null): void {
 router.post('/open', async (req: Request, res: Response) => {
   try {
     const request: OpenTabRequest = req.body;
-    
+
     if (!request.url) {
       return res.status(400).json({
         success: false,
@@ -68,12 +68,12 @@ router.post('/open', async (req: Request, res: Response) => {
     }
 
     const tabId = await browserManager.openTab(request);
-    
+
     const response: ApiResponse<{ tabId: string }> = {
       success: true,
       data: { tabId }
     };
-    
+
     return res.json(response);
   } catch (error) {
     return res.status(500).json({
@@ -116,12 +116,12 @@ router.post('/open', async (req: Request, res: Response) => {
 router.get('/list', async (_req: Request, res: Response) => {
   try {
     const tabs = await browserManager.getTabs();
-    
+
     const response: ApiResponse<typeof tabs> = {
       success: true,
       data: tabs
     };
-    
+
     return res.json(response);
   } catch (error) {
     return res.status(500).json({
@@ -160,7 +160,7 @@ router.post('/goto/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
     const request: NavigateRequest = req.body;
-    
+
     if (!request.url) {
       return res.status(400).json({
         success: false,
@@ -176,7 +176,7 @@ router.post('/goto/:tabId', async (req: Request, res: Response) => {
     }
 
     await browserManager.navigateTab(tabId, request.url);
-    
+
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -185,7 +185,7 @@ router.post('/goto/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -230,21 +230,21 @@ router.get('/screenshot/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
     const fullPage = req.query['fullPage'] === 'true';
-    
+
     if (!tabId) {
       return res.status(400).json({
         success: false,
         error: 'Tab ID is required'
       });
     }
-    
+
     const screenshot = await browserManager.screenshotTab(tabId, fullPage);
-    
+
     const response: ApiResponse<{ screenshot: string }> = {
       success: true,
       data: { screenshot }
     };
-    
+
     return res.json(response);
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -253,7 +253,7 @@ router.get('/screenshot/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -292,7 +292,7 @@ router.post('/click/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
     const request: ClickRequest = req.body;
-    
+
     if (!request.selector) {
       return res.status(400).json({
         success: false,
@@ -308,7 +308,7 @@ router.post('/click/:tabId', async (req: Request, res: Response) => {
     }
 
     await browserManager.clickElement(tabId, request.selector, request.waitForNavigation);
-    
+
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -317,7 +317,7 @@ router.post('/click/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -354,7 +354,7 @@ router.post('/hover/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
     const request: HoverRequest = req.body;
-    
+
     if (!request.selector) {
       return res.status(400).json({
         success: false,
@@ -370,7 +370,7 @@ router.post('/hover/:tabId', async (req: Request, res: Response) => {
     }
 
     await browserManager.hoverElement(tabId, request.selector);
-    
+
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -379,7 +379,7 @@ router.post('/hover/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -418,7 +418,7 @@ router.post('/fill/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
     const request: FillRequest = req.body;
-    
+
     if (!request.selector || !request.value) {
       return res.status(400).json({
         success: false,
@@ -434,7 +434,7 @@ router.post('/fill/:tabId', async (req: Request, res: Response) => {
     }
 
     await browserManager.fillField(tabId, request.selector, request.value);
-    
+
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -443,7 +443,7 @@ router.post('/fill/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -482,7 +482,7 @@ router.post('/select/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
     const request: SelectRequest = req.body;
-    
+
     if (!request.selector || !request.value) {
       return res.status(400).json({
         success: false,
@@ -498,7 +498,7 @@ router.post('/select/:tabId', async (req: Request, res: Response) => {
     }
 
     await browserManager.selectOption(tabId, request.selector, request.value);
-    
+
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -507,7 +507,7 @@ router.post('/select/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -556,7 +556,7 @@ router.post('/eval/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
     const request: EvalRequest = req.body;
-    
+
     if (!request.script) {
       return res.status(400).json({
         success: false,
@@ -572,12 +572,12 @@ router.post('/eval/:tabId', async (req: Request, res: Response) => {
     }
 
     const result = await browserManager.evaluateScript(tabId, request.script);
-    
+
     const response: ApiResponse<{ result: any }> = {
       success: true,
       data: { result }
     };
-    
+
     return res.json(response);
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -586,7 +586,7 @@ router.post('/eval/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -613,16 +613,16 @@ router.post('/eval/:tabId', async (req: Request, res: Response) => {
 router.delete('/close/:tabId', async (req: Request, res: Response) => {
   try {
     const { tabId } = req.params;
-    
+
     if (!tabId) {
       return res.status(400).json({
         success: false,
         error: 'Tab ID is required'
       });
     }
-    
+
     await browserManager.closeTab(tabId);
-    
+
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof TabNotFoundError) {
@@ -631,7 +631,7 @@ router.delete('/close/:tabId', async (req: Request, res: Response) => {
         error: error.message
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

@@ -19,7 +19,7 @@ describe('Config Routes', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup auth mock
     apiKey = 'test-api-key-123';
     mockAuthenticateApiKey.mockImplementation((req, res, next) => {
@@ -40,7 +40,7 @@ describe('Config Routes', () => {
       port: 3000
     });
 
-    mockUpdateConfig.mockImplementation((updates) => ({
+    mockUpdateConfig.mockImplementation(updates => ({
       chromePath: updates.chromePath ?? '/usr/bin/chrome',
       port: updates.port ?? 3000
     }));
@@ -60,9 +60,7 @@ describe('Config Routes', () => {
       const mockConfig = { chromePath: '/usr/bin/chrome', port: 3000 };
       mockLoadConfig.mockReturnValue(mockConfig);
 
-      const response = await request(app)
-        .get('/api/config/get')
-        .set('x-api-key', apiKey);
+      const response = await request(app).get('/api/config/get').set('x-api-key', apiKey);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -72,8 +70,7 @@ describe('Config Routes', () => {
     });
 
     it('should reject requests without API key', async () => {
-      const response = await request(app)
-        .get('/api/config/get');
+      const response = await request(app).get('/api/config/get');
 
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
@@ -129,9 +126,7 @@ describe('Config Routes', () => {
     });
 
     it('should reject requests without API key', async () => {
-      const response = await request(app)
-        .post('/api/config/set')
-        .send({ port: 4000 });
+      const response = await request(app).post('/api/config/set').send({ port: 4000 });
 
       expect(response.status).toBe(401);
     });

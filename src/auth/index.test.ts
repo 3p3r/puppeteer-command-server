@@ -11,7 +11,7 @@ const mockFs = vi.mocked(fs);
 describe('Authentication System', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup fs mocks
     mockFs.existsSync.mockReturnValue(false);
     mockFs.readFileSync.mockImplementation(() => {
@@ -41,9 +41,9 @@ describe('Authentication System', () => {
   describe('loadApiKey', () => {
     it('should create and save new API key when .secret does not exist', () => {
       mockFs.existsSync.mockReturnValue(false);
-      
+
       const key = loadApiKey();
-      
+
       expect(key).toHaveLength(64);
       expect(key).toMatch(/^[a-f0-9]+$/);
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
@@ -56,14 +56,11 @@ describe('Authentication System', () => {
       const existingKey = 'a'.repeat(64);
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(existingKey);
-      
+
       const key = loadApiKey();
-      
+
       expect(key).toBe(existingKey);
-      expect(mockFs.readFileSync).toHaveBeenCalledWith(
-        path.join(process.cwd(), '.secret'),
-        'utf8'
-      );
+      expect(mockFs.readFileSync).toHaveBeenCalledWith(path.join(process.cwd(), '.secret'), 'utf8');
     });
 
     it('should handle file read errors gracefully', () => {
@@ -71,9 +68,9 @@ describe('Authentication System', () => {
       mockFs.readFileSync.mockImplementation(() => {
         throw new Error('Read error');
       });
-      
+
       const key = loadApiKey();
-      
+
       expect(key).toHaveLength(64);
       expect(key).toMatch(/^[a-f0-9]+$/);
       expect(mockFs.writeFileSync).toHaveBeenCalled();

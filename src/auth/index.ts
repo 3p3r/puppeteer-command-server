@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -37,7 +37,7 @@ export function generateApiKey(): string {
 
 export function loadApiKey(): string {
   const secretPath = path.join(process.cwd(), '.secret');
-  
+
   if (fs.existsSync(secretPath)) {
     try {
       return fs.readFileSync(secretPath, 'utf8').trim();
@@ -48,7 +48,7 @@ export function loadApiKey(): string {
       return apiKey;
     }
   }
-  
+
   const apiKey = generateApiKey();
   fs.writeFileSync(secretPath, apiKey);
   return apiKey;
@@ -58,7 +58,7 @@ export function authenticateApiKey(req: Request, res: Response, next: NextFuncti
   // Check both lowercase and original case headers
   const providedKey = (req.headers['x-api-key'] || req.headers['X-API-KEY']) as string;
   const validKey = loadApiKey();
-  
+
   if (!providedKey || providedKey !== validKey) {
     res.status(401).json({
       success: false,
@@ -67,7 +67,7 @@ export function authenticateApiKey(req: Request, res: Response, next: NextFuncti
     });
     return;
   }
-  
+
   next();
 }
 

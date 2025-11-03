@@ -8,16 +8,26 @@ const asyncExec = promisify(exec);
 
 function isChromeLike(execPath: string): boolean {
   const lower = execPath.toLowerCase();
-  return lower.includes('chrome') || lower.includes('chromium') || lower.includes('edge') || lower.includes('msedge') || lower.includes('brave');
+  return (
+    lower.includes('chrome') ||
+    lower.includes('chromium') ||
+    lower.includes('edge') ||
+    lower.includes('msedge') ||
+    lower.includes('brave')
+  );
 }
 
 async function getDefaultBrowserPath(platform: string): Promise<string | null> {
   if (platform === 'win32') {
     try {
-      let { stdout } = await asyncExec('reg query HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice /v ProgId');
+      let { stdout } = await asyncExec(
+        'reg query HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice /v ProgId'
+      );
       let progId = stdout.trim().split(/\s+/).pop();
       if (!progId) return null;
-      let { stdout: cmdOut } = await asyncExec(`reg query "HKEY_CLASSES_ROOT\\${progId}\\shell\\open\\command" /ve`);
+      let { stdout: cmdOut } = await asyncExec(
+        `reg query "HKEY_CLASSES_ROOT\\${progId}\\shell\\open\\command" /ve`
+      );
       let match = cmdOut.match(/\"(.+?)\"/);
       if (match) return match[1] || null;
     } catch (e) {
@@ -25,11 +35,15 @@ async function getDefaultBrowserPath(platform: string): Promise<string | null> {
     }
   } else if (platform === 'darwin') {
     try {
-      let { stdout } = await asyncExec('defaults read com.apple.LaunchServices/com.apple.launchservices.secure | grep -o \'LSHandlerRoleAll = "[^"]*";\' | grep http');
+      let { stdout } = await asyncExec(
+        'defaults read com.apple.LaunchServices/com.apple.launchservices.secure | grep -o \'LSHandlerRoleAll = "[^"]*";\' | grep http'
+      );
       let match = stdout.match(/LSHandlerRoleAll = "([^"]*)";/);
       if (!match) return null;
       let bundleId = match[1];
-      let { stdout: appPathOut } = await asyncExec(`mdfind kMDItemCFBundleIdentifier = "${bundleId}"`);
+      let { stdout: appPathOut } = await asyncExec(
+        `mdfind kMDItemCFBundleIdentifier = "${bundleId}"`
+      );
       let appPath = appPathOut.trim();
       if (!appPath) return null;
       let exeName = path.basename(appPath, '.app');
@@ -78,17 +92,23 @@ async function searchDesktopShortcuts(platform: string): Promise<string[]> {
     let target: string | undefined;
     if (platform === 'win32' && file.toLowerCase().endsWith('.lnk')) {
       try {
-        const { stdout } = await asyncExec(`powershell.exe -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('${fullPath.replace(/'/g, "''")}'); $sc.TargetPath"`);
+        const { stdout } = await asyncExec(
+          `powershell.exe -Command "$ws = New-Object -ComObject WScript.Shell; $sc = $ws.CreateShortcut('${fullPath.replace(/'/g, "''")}'); $sc.TargetPath"`
+        );
         target = stdout.trim();
-      } catch (e) { }
+      } catch (e) {}
     } else if (platform === 'darwin') {
       try {
-        const { stdout: kindOut } = await asyncExec(`mdls -name kMDItemKind "${fullPath.replace(/"/g, '\\"')}"`);
+        const { stdout: kindOut } = await asyncExec(
+          `mdls -name kMDItemKind "${fullPath.replace(/"/g, '\\"')}"`
+        );
         if (kindOut.includes('Alias')) {
-          const { stdout: origOut } = await asyncExec(`osascript -e 'tell application "Finder" to get POSIX path of (original item of item (POSIX file "${fullPath.replace(/"/g, '\\"')}") as alias)'`);
+          const { stdout: origOut } = await asyncExec(
+            `osascript -e 'tell application "Finder" to get POSIX path of (original item of item (POSIX file "${fullPath.replace(/"/g, '\\"')}") as alias)'`
+          );
           target = origOut.trim();
         }
-      } catch (e) { }
+      } catch (e) {}
     } else if (platform === 'linux' && file.endsWith('.desktop')) {
       try {
         const content = fs.readFileSync(fullPath, 'utf8');
@@ -96,7 +116,7 @@ async function searchDesktopShortcuts(platform: string): Promise<string[]> {
         if (execLine) {
           target = execLine.slice(5).trim().split(' ')[0];
         }
-      } catch (e) { }
+      } catch (e) {}
     }
     if (target && isChromeLike(target)) {
       shortcuts.push(target);
@@ -118,7 +138,7 @@ export async function findChromeBrowser(): Promise<string | null> {
   }
 
   // Search known paths
-  const knownPaths: { [key: string]: string[]; } = {
+  const knownPaths: { [key: string]: string[] } = {
     win32: [
       'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
@@ -130,7 +150,10 @@ export async function findChromeBrowser(): Promise<string | null> {
       'C:\\Program Files (x86)\\Chromium\\Application\\chrome.exe',
       path.join(os.homedir(), 'AppData\\Local\\Google\\Chrome\\Application\\chrome.exe'),
       path.join(os.homedir(), 'AppData\\Local\\Microsoft\\Edge\\Application\\msedge.exe'),
-      path.join(os.homedir(), 'AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'),
+      path.join(
+        os.homedir(),
+        'AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe'
+      ),
       path.join(os.homedir(), 'AppData\\Local\\Chromium\\Application\\chrome.exe')
     ],
     darwin: [

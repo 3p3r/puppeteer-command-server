@@ -1,43 +1,54 @@
-import puppeteer, { Browser, Page } from 'puppeteer-core';
+import puppeteer, { type Browser, type Page } from 'puppeteer-core';
 import { randomUUID } from 'crypto';
-import { TabInfo, OpenTabRequest, BrowserError, TabNotFoundError } from '../types/index.js';
+import { type TabInfo, type OpenTabRequest, BrowserError, TabNotFoundError } from '../types/index.js';
 import { findChromeBrowser } from '../chrome/FindChrome.js';
+import path from 'path';
+import assert from 'assert';
 
 export class BrowserManager {
-  private browser: Browser | null = null;
-  private tabs: Map<string, Page> = new Map();
+  private browsers: Map<boolean, Browser | null> = new Map();
+  private tabs: Map<string, { page: Page; visible: boolean }> = new Map();
   private chromePath: string | null = null;
 
   constructor(chromePath?: string | null) {
     this.chromePath = chromePath || null;
+    this.browsers.set(true, null); // headless
+    this.browsers.set(false, null); // visible
   }
 
-  async initialize(): Promise<void> {
+  async initialize(headless: boolean): Promise<void> {
     try {
+      await this.close();
       const executablePath = await this.getChromePath();
-      
-      this.browser = await puppeteer.launch({
+      const args = [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--mute-audio',
+        `--user-data-dir=${path.resolve(process.cwd(), '.browser')}`
+      ];
+
+      const browser = await puppeteer.launch({
         executablePath,
-        headless: false, // Default to headed mode
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-          // todo: browser's context needs to be isolated from the main user profile
-          // todo: we need to browser instances, one headless and one headed
-          '--headless'
-        ]
+        headless,
+        args
       });
 
+      this.browsers.set(headless, browser);
+
       // Handle browser disconnection
-      this.browser.on('disconnected', () => {
+      browser.on('disconnected', () => {
         console.log('Browser disconnected, clearing tabs');
-        this.tabs.clear();
-        this.browser = null;
+        for (const [tabId, tab] of this.tabs) {
+          if (tab.visible === headless) {
+            this.tabs.delete(tabId);
+          }
+        }
+        this.browsers.set(headless, null);
       });
 
       console.log('Browser initialized successfully');
@@ -64,19 +75,25 @@ export class BrowserManager {
   }
 
   async openTab(request: OpenTabRequest): Promise<string> {
-    if (!this.browser) {
-      await this.initialize();
+    const headless = request.headless ?? true;
+
+    if (!this.browsers.get(headless)) {
+      await this.initialize(headless);
     }
 
-    if (!this.browser) {
+    const browser = this.browsers.get(headless);
+
+    if (!browser) {
       throw new BrowserError('Browser not initialized');
     }
 
+    assert(browser);
+
     try {
-      const page = await this.browser.newPage();
+      const page = await browser.newPage();
       const tabId = randomUUID();
-      
-      this.tabs.set(tabId, page);
+
+      this.tabs.set(tabId, { page, visible: headless });
 
       // Set viewport
       await page.setViewport({ width: 1280, height: 720 });
@@ -98,27 +115,27 @@ export class BrowserManager {
   }
 
   async navigateTab(tabId: string, url: string): Promise<void> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
-      await page.goto(url, { waitUntil: 'networkidle2' });
+      await tab.page.goto(url, { waitUntil: 'networkidle2' });
     } catch (error) {
       throw new BrowserError(`Failed to navigate tab: ${error}`);
     }
   }
 
   async screenshotTab(tabId: string, fullPage = false): Promise<string> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
-      const screenshot = await page.screenshot({ 
-        type: 'png', 
+      const screenshot = await tab.page.screenshot({
+        type: 'png',
         fullPage,
         encoding: 'base64'
       });
@@ -129,19 +146,19 @@ export class BrowserManager {
   }
 
   async clickElement(tabId: string, selector: string, waitForNavigation = false): Promise<void> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
       if (waitForNavigation) {
         await Promise.all([
-          page.waitForNavigation({ waitUntil: 'networkidle2' }),
-          page.click(selector)
+          tab.page.waitForNavigation({ waitUntil: 'networkidle2' }),
+          tab.page.click(selector)
         ]);
       } else {
-        await page.click(selector);
+        await tab.page.click(selector);
       }
     } catch (error) {
       throw new BrowserError(`Failed to click element: ${error}`);
@@ -149,65 +166,65 @@ export class BrowserManager {
   }
 
   async hoverElement(tabId: string, selector: string): Promise<void> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
-      await page.hover(selector);
+      await tab.page.hover(selector);
     } catch (error) {
       throw new BrowserError(`Failed to hover element: ${error}`);
     }
   }
 
   async fillField(tabId: string, selector: string, value: string): Promise<void> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
-      await page.type(selector, value);
+      await tab.page.type(selector, value);
     } catch (error) {
       throw new BrowserError(`Failed to fill field: ${error}`);
     }
   }
 
   async selectOption(tabId: string, selector: string, value: string): Promise<void> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
-      await page.select(selector, value);
+      await tab.page.select(selector, value);
     } catch (error) {
       throw new BrowserError(`Failed to select option: ${error}`);
     }
   }
 
   async evaluateScript(tabId: string, script: string): Promise<any> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
-      return await page.evaluate(script);
+      return await tab.page.evaluate(script);
     } catch (error) {
       throw new BrowserError(`Failed to evaluate script: ${error}`);
     }
   }
 
   async closeTab(tabId: string): Promise<void> {
-    const page = this.tabs.get(tabId);
-    if (!page) {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
       throw new TabNotFoundError(tabId);
     }
 
     try {
-      await page.close();
+      await tab.page.close();
       this.tabs.delete(tabId);
     } catch (error) {
       throw new BrowserError(`Failed to close tab: ${error}`);
@@ -216,8 +233,8 @@ export class BrowserManager {
 
   async getTabs(): Promise<TabInfo[]> {
     const tabs: TabInfo[] = [];
-    
-    for (const [tabId, page] of this.tabs) {
+
+    for (const [tabId, { page }] of this.tabs) {
       tabs.push({
         id: tabId,
         url: page.url(),
@@ -225,16 +242,18 @@ export class BrowserManager {
         headless: false // We'll track this if needed
       });
     }
-    
+
     return tabs;
   }
 
   async close(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
-      this.tabs.clear();
+    for (const [headless, browser] of this.browsers) {
+      if (browser) {
+        await browser.close();
+        this.browsers.set(headless, null);
+      }
     }
+    this.tabs.clear();
   }
 
   updateChromePath(chromePath: string | null): void {

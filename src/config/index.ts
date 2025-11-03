@@ -19,7 +19,7 @@ export function loadConfig(): Config {
   } catch (error) {
     console.warn('Failed to load config file, using defaults:', error);
   }
-  
+
   return DEFAULT_CONFIG;
 }
 

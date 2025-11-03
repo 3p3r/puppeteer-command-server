@@ -32,12 +32,12 @@ const router = Router();
 router.get('/get', async (_req: Request, res: Response) => {
   try {
     const config = loadConfig();
-    
+
     const response: ApiResponse<Config> = {
       success: true,
       data: config
     };
-    
+
     return res.json(response);
   } catch (error) {
     return res.status(500).json({
@@ -87,7 +87,7 @@ router.get('/get', async (_req: Request, res: Response) => {
 router.post('/set', async (req: Request, res: Response) => {
   try {
     const request: ConfigUpdateRequest = req.body;
-    
+
     // Validate port if provided
     if (request.port !== undefined && (request.port < 1 || request.port > 65535)) {
       return res.status(400).json({
@@ -95,14 +95,14 @@ router.post('/set', async (req: Request, res: Response) => {
         error: 'Port must be between 1 and 65535'
       });
     }
-    
+
     const updatedConfig = updateConfig(request);
-    
+
     const response: ApiResponse<Config> = {
       success: true,
       data: updatedConfig
     };
-    
+
     return res.json(response);
   } catch (error) {
     return res.status(500).json({

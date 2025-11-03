@@ -1,12 +1,11 @@
 import path from 'path';
 import { $, chalk, os, which, within } from 'zx';
 
-import { name } from "../package.json";
+import { name } from '../package.json';
 
 const BUILD_DIR = path.join(__dirname, '../build');
 
 async function main() {
-
   console.log(chalk.blue('Cleaning build directory...'));
   await $`rm -rf ${BUILD_DIR}`;
   await $`mkdir -p ${BUILD_DIR}`;
@@ -15,8 +14,8 @@ async function main() {
   await Promise.all([
     $`npx pkg --public dist/server.js -c package.json -t "node18-macos-arm64" -o ${path.join(BUILD_DIR, name)}-macos-arm64`,
     $`npx pkg --public dist/server.js -c package.json -t "node18-macos-x64" -o ${path.join(BUILD_DIR, name)}-macos-x64`,
-    $`npx pkg --public dist/server.js -c package.json -t "node18-linux-x64" -o ${path.join(BUILD_DIR, "linux", "pcs")}`,
-    $`npx pkg --public dist/server.js -c package.json -t "node18-win-x64" -o ${path.join(BUILD_DIR, "win", "pcs.exe")}`,
+    $`npx pkg --public dist/server.js -c package.json -t "node18-linux-x64" -o ${path.join(BUILD_DIR, 'linux', 'pcs')}`,
+    $`npx pkg --public dist/server.js -c package.json -t "node18-win-x64" -o ${path.join(BUILD_DIR, 'win', 'pcs.exe')}`
   ]);
 
   async function findLipo() {
@@ -26,7 +25,7 @@ async function main() {
       which('llvm-lipo-13').catch(() => null),
       which('llvm-lipo-14').catch(() => null),
       which('llvm-lipo-15').catch(() => null),
-      which('lipo.exe').catch(() => null),
+      which('lipo.exe').catch(() => null)
     ]);
     return lipoPath;
   }
@@ -48,7 +47,6 @@ async function main() {
   });
 
   console.log(chalk.green(`Compiled ${name} successfully.`));
-
 }
 
 main().catch(err => {
