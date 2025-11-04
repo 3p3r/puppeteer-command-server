@@ -376,6 +376,19 @@ export class BrowserManager {
     }
   }
 
+  async getTabHtml(tabId: string): Promise<string> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) {
+      throw new TabNotFoundError(tabId);
+    }
+
+    try {
+      return await tab.page.content();
+    } catch (error) {
+      throw new BrowserError(`Failed to get tab HTML: ${error}`);
+    }
+  }
+
   async getTabs(): Promise<TabInfo[]> {
     const tabs: TabInfo[] = [];
 

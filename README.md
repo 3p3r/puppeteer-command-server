@@ -53,6 +53,7 @@ Assuming access to the path of the Chrome executable, the server offers this API
 - `tabs/waitForFunction/:tabId`: waits for a function to return truthy value in the tab with the given ID
 - `tabs/waitForNavigation/:tabId`: waits for navigation to complete in the tab with the given ID
 - `tabs/url/:tabId`: gets the current URL of the tab with the given ID
+- `tabs/html/:tabId`: gets the current HTML content of the tab with the given ID
 
 Browser automation happens through Puppeteer. Session management is automatic.
 

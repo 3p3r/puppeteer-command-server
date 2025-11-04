@@ -472,5 +472,24 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
+  server.tool(
+    'browser_get_html',
+    'Get the current HTML content of a browser tab. Returns the complete HTML source code of the page as a string, including all dynamically generated content. Useful for extracting page content, analyzing page structure, debugging, or saving snapshots of web pages.',
+    {
+      tabId: z.string().describe('Tab ID')
+    },
+    async args => {
+      const html = await browserManager.getTabHtml(args.tabId);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true, html })
+          }
+        ]
+      };
+    }
+  );
+
   return server;
 }

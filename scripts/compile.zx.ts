@@ -19,32 +19,32 @@ async function main() {
   await $`mkdir -p ${BUILD_DIR}`;
 
   console.log(chalk.blue(`Compiling ${name}...`));
-  
+
   // Build compression flags based on fast mode
   const compressionArgs = fastMode ? [] : ['-C', 'Brotli'];
-  
+
   // Build platform-specific binaries
   const pkgCommands = [];
-  
+
   if (buildMac || buildAll) {
     pkgCommands.push(
       $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-macos-arm64" -o ${path.join(BUILD_DIR, name)}-macos-arm64`,
       $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-macos-x64" -o ${path.join(BUILD_DIR, name)}-macos-x64`
     );
   }
-  
+
   if (buildLinux || buildAll) {
     pkgCommands.push(
       $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-linux-x64" -o ${path.join(BUILD_DIR, 'linux', 'pcs')}`
     );
   }
-  
+
   if (buildWin || buildAll) {
     pkgCommands.push(
       $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-win-x64" -o ${path.join(BUILD_DIR, 'win', 'pcs.exe')}`
     );
   }
-  
+
   await Promise.all(pkgCommands);
 
   // Find upx early for macOS build process
@@ -70,7 +70,7 @@ async function main() {
 
     await within(async () => {
       $.cwd = BUILD_DIR;
-      
+
       // Apply upx to individual arch binaries before lipo
       if (upx) {
         console.log(chalk.blue(`Compressing individual macOS binaries with upx ${upxLevel}...`));
@@ -79,7 +79,7 @@ async function main() {
           $`${upx} ${upxLevel} ${name}-macos-x64 --force-macos`
         ]);
       }
-      
+
       if (lipo) {
         console.log(chalk.blue('Creating universal binary using lipo...'));
         await $`${lipo} -create -output ${name} ${name}-macos-arm64 ${name}-macos-x64`;
@@ -95,17 +95,17 @@ async function main() {
   // Copy binaries to sig/build/ for Go embedding
   console.log(chalk.blue('Copying binaries to sig/build/ for Go embedding...'));
   const SIG_BUILD_DIR = path.join(__dirname, '../sig/build');
-  
+
   if (buildLinux || buildAll) {
     await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'linux')}`;
     await $`cp ${path.join(BUILD_DIR, 'linux', 'pcs')} ${path.join(SIG_BUILD_DIR, 'linux', 'pcs')}`;
   }
-  
+
   if (buildMac || buildAll) {
     await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'mac')}`;
     await $`cp ${path.join(BUILD_DIR, 'mac', 'pcs')} ${path.join(SIG_BUILD_DIR, 'mac', 'pcs')}`;
   }
-  
+
   if (buildWin || buildAll) {
     await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'win')}`;
     await $`cp ${path.join(BUILD_DIR, 'win', 'pcs.exe')} ${path.join(SIG_BUILD_DIR, 'win', 'pcs.exe')}`;
@@ -124,7 +124,7 @@ async function main() {
 
     const SIG_BUILD_OUTPUT_DIR = path.join(BUILD_DIR, 'sig');
     await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}`;
-    
+
     if (buildLinux || buildAll) {
       await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/linux`;
     }
@@ -141,29 +141,35 @@ async function main() {
     await within(async () => {
       $.cwd = repoRoot;
       const goBuilds = [];
-      
+
       if (buildLinux || buildAll) {
-        goBuilds.push((async () => {
-          console.log(chalk.blue('Building Go binary for Linux...'));
-          await $`GOOS=linux GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux/sig')} ./sig`;
-        })());
+        goBuilds.push(
+          (async () => {
+            console.log(chalk.blue('Building Go binary for Linux...'));
+            await $`GOOS=linux GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux/sig')} ./sig`;
+          })()
+        );
       }
-      
+
       if (buildMac || buildAll) {
-        goBuilds.push((async () => {
-          console.log(chalk.blue('Building Go binary for macOS...'));
-          // todo: use lipo here
-          await $`GOOS=darwin GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac/sig')} ./sig`;
-        })());
+        goBuilds.push(
+          (async () => {
+            console.log(chalk.blue('Building Go binary for macOS...'));
+            // todo: use lipo here
+            await $`GOOS=darwin GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac/sig')} ./sig`;
+          })()
+        );
       }
-      
+
       if (buildWin || buildAll) {
-        goBuilds.push((async () => {
-          console.log(chalk.blue('Building Go binary for Windows...'));
-          await $`GOOS=windows GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'win/sig.exe')} ./sig`;
-        })());
+        goBuilds.push(
+          (async () => {
+            console.log(chalk.blue('Building Go binary for Windows...'));
+            await $`GOOS=windows GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'win/sig.exe')} ./sig`;
+          })()
+        );
       }
-      
+
       await Promise.all(goBuilds);
     });
 
@@ -180,16 +186,16 @@ async function main() {
     const SIG_BUILD_OUTPUT_DIR = path.join(BUILD_DIR, 'sig');
     const MIN_BUILD_OUTPUT_DIR = path.join(BUILD_DIR, 'min');
     await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}`;
-    
+
     const upxCommands = [];
-    
+
     if (buildLinux || buildAll) {
       await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/linux`;
       upxCommands.push(
         $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'linux', 'sig')}`
       );
     }
-    
+
     if (buildMac || buildAll) {
       await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/mac`;
       upxCommands.push(
@@ -199,14 +205,14 @@ async function main() {
       //   $`cp ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'sig')}`
       // );
     }
-    
+
     if (buildWin || buildAll) {
       await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/win`;
       upxCommands.push(
         $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'win', 'sig.exe')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'win', 'sig.exe')}`
       );
     }
-    
+
     await Promise.all(upxCommands);
     console.log(chalk.green('Binaries compressed successfully.'));
   } else {

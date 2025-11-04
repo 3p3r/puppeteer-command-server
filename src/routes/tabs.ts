@@ -1153,4 +1153,66 @@ router.get('/url/:tabId', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/tabs/html/{tabId}:
+ *   get:
+ *     summary: Get current HTML content of tab
+ *     tags: [Tabs]
+ *     parameters:
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: HTML retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     html:
+ *                       type: string
+ */
+router.get('/html/:tabId', async (req: Request, res: Response) => {
+  try {
+    const { tabId } = req.params;
+
+    if (!tabId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tab ID is required'
+      });
+    }
+
+    const html = await browserManager.getTabHtml(tabId);
+
+    const response: ApiResponse<{ html: string }> = {
+      success: true,
+      data: { html }
+    };
+
+    return res.json(response);
+  } catch (error) {
+    if (error instanceof TabNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export { router as tabsRouter };

@@ -126,6 +126,13 @@ describe('Tab Routes - Request Validation', () => {
     app.get('/api/tabs/url/:tabId', (_req, res) => {
       return res.json({ success: true, data: { url: 'https://example.com' } });
     });
+
+    app.get('/api/tabs/html/:tabId', (_req, res) => {
+      return res.json({
+        success: true,
+        data: { html: '<!DOCTYPE html><html><body>Test</body></html>' }
+      });
+    });
   });
 
   describe('Authentication', () => {
@@ -334,6 +341,16 @@ describe('Tab Routes - Request Validation', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.url).toBe('https://example.com');
+    });
+
+    it('should return 200 with HTML for valid html request', async () => {
+      const response = await request(app)
+        .get('/api/tabs/html/test-tab')
+        .set('x-api-key', 'test-key');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.html).toBe('<!DOCTYPE html><html><body>Test</body></html>');
     });
   });
 });
