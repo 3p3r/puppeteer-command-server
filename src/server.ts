@@ -151,7 +151,7 @@ app.use('*', (_req, res) => {
 });
 
 // Start server
-app.listen(config.port, () => {
+app.listen(config.port, "0.0.0.0", () => {
   console.log(`🚀 Puppeteer Command Server running on port ${config.port}`);
   console.log(`📚 API Documentation: http://localhost:${config.port}/docs`);
   console.log(`🔧 MCP Endpoint: http://localhost:${config.port}/mcp`);

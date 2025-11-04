@@ -7,6 +7,7 @@ esbuild
     outfile: 'dist/server.js',
     platform: 'node',
     format: 'cjs',
+    mainFields: ['main', 'module'],
     plugins: []
   })
   .catch(() => process.exit(1));
