@@ -1,17 +1,57 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
+import {
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  type Resource
+} from '@modelcontextprotocol/sdk/types.js';
+
+const ALL_IMAGES = new Map<string, { list: Resource; read: Resource }>();
 
 export function initializeMcpServer(chromePath?: string | null): McpServer {
   const browserManager = BrowserManagerSingleton(chromePath);
 
-  const server = new McpServer({
-    name: 'puppeteer-command-server',
-    version: '1.0.0'
+  const mcp = new McpServer(
+    {
+      name: 'puppeteer-command-server',
+      version: '1.0.0'
+    },
+    {
+      capabilities: {
+        resources: {
+          listChanged: true,
+          subscribe: true
+        },
+        tools: {
+          listChanged: true
+        }
+      }
+    }
+  );
+
+  // List available resources
+  mcp.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    return {
+      resources: Array.from(ALL_IMAGES.values()).map(r => r.list)
+    };
+  });
+
+  // Read resource contents
+  mcp.server.setRequestHandler(ReadResourceRequestSchema, async request => {
+    const uri = request.params.uri;
+
+    if (ALL_IMAGES.has(uri)) {
+      return {
+        contents: [ALL_IMAGES.get(uri)!.read]
+      };
+    }
+
+    throw new Error('Resource not found');
   });
 
   // Register browser automation tools
-  server.tool(
+  mcp.tool(
     'browser_open_tab',
     'Launch a new browser tab with Chrome/Chromium and navigate to a URL. Opens a Puppeteer-controlled page instance that can be automated with other browser commands. Supports both headless (no UI) and headed (visible browser) modes for testing, scraping, and automation tasks.',
     {
@@ -39,7 +79,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_list_tabs',
     'List all currently open browser tabs managed by Puppeteer. Returns an array of tab objects with their IDs and metadata. Useful for managing multiple pages, checking what tabs are active, and selecting which tab to interact with.',
     {},
@@ -56,7 +96,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_navigate',
     'Navigate an existing browser tab to a different URL. Waits for the page to load completely before returning. Useful for moving between pages in a multi-step automation workflow or testing navigation flows.',
     {
@@ -78,9 +118,9 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_screenshot',
-    'Capture a screenshot of a browser tab as a PNG image. Can capture either the visible viewport or the entire scrollable page. Returns base64-encoded image data. Perfect for visual testing, documentation, monitoring, or debugging web pages.',
+    'Capture a screenshot of a browser tab as a PNG image. Can capture either the visible viewport or the entire scrollable page. Returns the image directly as MCP image content. Perfect for visual testing, documentation, monitoring, or debugging web pages.',
     {
       tabId: z.string().describe('Tab ID to screenshot'),
       fullPage: z
@@ -92,18 +132,38 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     },
     async args => {
       const screenshot = await browserManager.screenshotTab(args.tabId, args.fullPage || false);
+      const resourceUri = `mcp://browser_screenshots/${args.tabId}/${Date.now()}.png`;
+      const listResource: Resource = {
+        uri: resourceUri,
+        name: `Screenshot of tab ${args.tabId}`,
+        description: `Screenshot captured from tab ${args.tabId} at ${new Date().toISOString()}`,
+        mimeType: 'image/png'
+      };
+      const readResource: Resource = {
+        uri: resourceUri,
+        name: `Screenshot of tab ${args.tabId}`,
+        description: `Screenshot captured from tab ${args.tabId} at ${new Date().toISOString()}`,
+        mimeType: 'image/png',
+        blob: screenshot
+      };
+      ALL_IMAGES.set(resourceUri, { list: listResource, read: readResource });
       return {
         content: [
           {
+            type: 'image',
+            data: screenshot,
+            mimeType: 'image/png'
+          },
+          {
             type: 'text',
-            text: JSON.stringify({ success: true, screenshot })
+            text: JSON.stringify({ success: true, resourceUri })
           }
         ]
       };
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_click',
     'Click an element on a web page using a CSS selector. Simulates a real mouse click on buttons, links, or any clickable element. Optionally waits for page navigation to complete after clicking, useful for links and form submissions.',
     {
@@ -133,7 +193,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_hover',
     'Move the mouse cursor over an element to trigger hover effects. Useful for testing dropdown menus, tooltips, or any hover-triggered UI elements. Simulates the mouseover event just like a real user hovering with their mouse.',
     {
@@ -157,7 +217,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_fill_form',
     'Type text into an input field or textarea on a web page. Clears existing content and fills the field with the specified value. Works with text inputs, password fields, search boxes, textareas, and other text entry elements. Essential for form automation and testing.',
     {
@@ -182,7 +242,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_select_option',
     'Select an option from a dropdown menu (<select> element). Chooses an option by its value attribute. Triggers change events as if a user selected the option manually. Perfect for automated form filling and testing select dropdowns.',
     {
@@ -207,7 +267,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_eval_js',
     "Execute custom JavaScript code in the context of a web page and return the result. Runs in the page's JavaScript environment with access to the DOM, window object, and page variables. Use for extracting data, manipulating page content, or calling page functions. Returns serializable values (strings, numbers, objects, arrays).",
     {
@@ -231,7 +291,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_close_tab',
     'Close and cleanup a browser tab. Closes the Puppeteer page instance and releases associated resources. Use when finished with a tab to free up memory and browser resources.',
     {
@@ -252,7 +312,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_bring_to_front',
     'Activate and bring a browser tab to the foreground. Makes the specified tab the active tab in the browser window, similar to clicking on a browser tab. Useful when working with multiple tabs in headed mode.',
     {
@@ -271,7 +331,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_focus_element',
     'Set keyboard focus on a specific element on the page. Triggers focus events and prepares the element to receive keyboard input. Commonly used before typing into fields, testing keyboard navigation, or triggering focus-dependent behaviors.',
     {
@@ -295,7 +355,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_go_back',
     "Navigate backward in the browser history, equivalent to clicking the back button. Goes to the previous page in the tab's navigation history. Useful for testing navigation flows or returning to previous pages in multi-step processes.",
     {
@@ -314,7 +374,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_go_forward',
     "Navigate forward in the browser history, equivalent to clicking the forward button. Goes to the next page in the tab's navigation history after going back. Only works if you've previously navigated backward.",
     {
@@ -333,7 +393,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_reload',
     'Reload the current page in a tab, equivalent to pressing F5 or clicking the refresh button. Refreshes all page content and re-executes scripts. Optionally specify when to consider the reload complete (e.g., wait for network to be idle or just the load event).',
     {
@@ -358,7 +418,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_wait_for_selector',
     'Wait for an element matching a CSS selector to appear in the DOM. Pauses execution until the element is found or timeout is reached. Optionally wait for the element to be visible (not just present in DOM). Essential for handling dynamic content, SPAs, and elements loaded via JavaScript.',
     {
@@ -391,7 +451,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_wait_for_function',
     'Wait for a custom JavaScript function to return a truthy value. Repeatedly evaluates the provided function in the page context until it returns true or timeout is reached. More flexible than wait_for_selector - use for waiting on custom conditions like variable values, element counts, or complex page states.',
     {
@@ -421,7 +481,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_wait_for_navigation',
     'Wait for a page navigation event to complete. Waits for the page to finish loading after actions that trigger navigation (like clicking links or submitting forms). Specify different completion criteria based on your needs - wait for initial load or for network to become idle.',
     {
@@ -453,7 +513,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_get_url',
     'Get the current URL of a browser tab. Returns the complete URL currently loaded in the tab, including any changes from navigation, redirects, or hash/query parameter updates. Useful for verifying navigation, checking redirects, or tracking page state.',
     {
@@ -472,7 +532,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  server.tool(
+  mcp.tool(
     'browser_get_html',
     'Get the current HTML content of a browser tab. Returns the complete HTML source code of the page as a string, including all dynamically generated content. Useful for extracting page content, analyzing page structure, debugging, or saving snapshots of web pages.',
     {
@@ -491,5 +551,5 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     }
   );
 
-  return server;
+  return mcp;
 }
