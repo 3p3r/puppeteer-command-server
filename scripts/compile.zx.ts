@@ -192,24 +192,24 @@ async function main() {
     if (buildLinux || buildAll) {
       await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/linux`;
       upxCommands.push(
-        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'linux', 'sig')}`
+        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'linux', 'pcs')}`
       );
     }
 
     if (buildMac || buildAll) {
       await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/mac`;
       upxCommands.push(
-        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'sig')} --force-macos`
+        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'pcs')} --force-macos`
       );
       // upxCommands.push(
-      //   $`cp ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'sig')}`
+      //   $`cp ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'pcs')}`
       // );
     }
 
     if (buildWin || buildAll) {
       await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/win`;
       upxCommands.push(
-        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'win', 'sig.exe')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'win', 'sig.exe')}`
+        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'win', 'sig.exe')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'win', 'pcs.exe')}`
       );
     }
 
