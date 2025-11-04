@@ -358,9 +358,7 @@ describe('Tab Routes - Request Validation', () => {
     });
 
     it('should return 200 for valid closeAll request', async () => {
-      const response = await request(app)
-        .delete('/api/tabs/closeAll')
-        .set('x-api-key', 'test-key');
+      const response = await request(app).delete('/api/tabs/closeAll').set('x-api-key', 'test-key');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

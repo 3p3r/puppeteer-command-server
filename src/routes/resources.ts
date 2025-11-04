@@ -86,4 +86,3 @@ router.delete('/cleanAll', (_req: Request, res: Response) => {
 });
 
 export { router as resourcesRouter };
-

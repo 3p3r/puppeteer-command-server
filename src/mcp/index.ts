@@ -573,9 +573,7 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
     {
       uri: z
         .string()
-        .describe(
-          'Resource URI to remove (e.g., "mcp://browser_screenshots/tab-id/timestamp.png")'
-        )
+        .describe('Resource URI to remove (e.g., "mcp://browser_screenshots/tab-id/timestamp.png")')
     },
     async args => {
       const existed = ALL_IMAGES.has(args.uri);
