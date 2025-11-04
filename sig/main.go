@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/signal"
+	"path/filepath"
 	"runtime"
-	"syscall"
 )
 
 // embeddedBinary is defined in platform-specific files:
@@ -27,57 +26,77 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a unique temporary file with appropriate extension
-	var tmpFilePath string
-	var tmpFile *os.File
-	var err error
+	// Determine binary name based on platform
+	var binaryName string
 	if runtime.GOOS == "windows" {
-		tmpFile, err = os.CreateTemp("", "pcs-*.exe")
+		binaryName = "pcs.exe"
 	} else {
-		tmpFile, err = os.CreateTemp("", "pcs-*")
-	}
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create temporary file: %v\n", err)
-		os.Exit(1)
-	}
-	// todo: check cleanup ?
-	tmpFilePath = tmpFile.Name()
-	tmpFile.Close()
-
-	// Write embedded binary to temp file
-	err = os.WriteFile(tmpFilePath, embeddedBinary, 0755)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to write temporary binary: %v\n", err)
-		os.Exit(1)
+		binaryName = "pcs"
 	}
 
-	// Ensure the file has execute permissions
-	err = os.Chmod(tmpFilePath, 0755)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to set execute permissions: %v\n", err)
-		os.Exit(1)
+	// Try to use home directory first, fallback to temp directory
+	var binaryPath string
+	var err error
+	
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		// Home directory available - use ~/.pcs/
+		pcsDir := filepath.Join(homeDir, ".pcs")
+		
+		// Create directory if it doesn't exist
+		err = os.MkdirAll(pcsDir, 0755)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: Failed to create ~/.pcs directory: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Falling back to temporary directory...\n")
+			// Fallback to temp directory
+			binaryPath, err = createTempBinary(binaryName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to create temporary file: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			binaryPath = filepath.Join(pcsDir, binaryName)
+		}
+	} else {
+		// Home directory not available - use temp directory
+		fmt.Fprintf(os.Stderr, "Warning: Could not determine home directory: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Falling back to temporary directory...\n")
+		binaryPath, err = createTempBinary(binaryName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create temporary file: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
-	// Cleanup function
-	cleanup := func() {
-		os.Remove(tmpFilePath)
+	// Check if binary already exists and matches size (reuse detection)
+	needsExtraction := true
+	if fileInfo, err := os.Stat(binaryPath); err == nil {
+		// File exists - check size
+		if fileInfo.Size() == int64(len(embeddedBinary)) {
+			// Size matches - reuse existing binary
+			needsExtraction = false
+		}
 	}
 
-	// Setup signal handling for cleanup
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-sigChan
-		cleanup()
-		os.Exit(1)
-	}()
+	// Extract binary only if needed
+	if needsExtraction {
+		err = os.WriteFile(binaryPath, embeddedBinary, 0755)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write binary: %v\n", err)
+			os.Exit(1)
+		}
 
-	// Defer cleanup on normal exit
-	defer cleanup()
+		// Ensure the file has execute permissions
+		err = os.Chmod(binaryPath, 0755)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to set execute permissions: %v\n", err)
+			os.Exit(1)
+		}
+	}
 
 	// Execute the binary with all passed arguments
 	ctx := context.Background()
-	cmd := exec.CommandContext(ctx, tmpFilePath, os.Args[1:]...)
+	cmd := exec.CommandContext(ctx, binaryPath, os.Args[1:]...)
 	
 	// Pass through stdin, stdout, stderr
 	cmd.Stdin = os.Stdin
@@ -94,5 +113,26 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Failed to execute binary: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// createTempBinary creates a temporary file for the binary and returns its path
+func createTempBinary(binaryName string) (string, error) {
+	var tmpFile *os.File
+	var err error
+	
+	if runtime.GOOS == "windows" {
+		tmpFile, err = os.CreateTemp("", "pcs-*.exe")
+	} else {
+		tmpFile, err = os.CreateTemp("", "pcs-*")
+	}
+	
+	if err != nil {
+		return "", err
+	}
+	
+	tmpFilePath := tmpFile.Name()
+	tmpFile.Close()
+	
+	return tmpFilePath, nil
 }
 
