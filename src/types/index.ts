@@ -1,6 +1,17 @@
 export interface Config {
   chromePath: string | null;
   port: number;
+  auth?: {
+    apiKey?: {
+      enabled?: boolean; // default: true
+    };
+    jwt?: {
+      enabled?: boolean; // default: false
+      issuer?: string;
+      audience?: string;
+      jwksUrl?: string;
+    };
+  };
 }
 
 export interface TabInfo {

@@ -60,8 +60,55 @@ Assuming access to the path of the Chrome executable, the server offers this API
 
 Browser automation happens through Puppeteer. Session management is automatic.
 
-The server is implemented in Express and Typescript and all routes are protected
-with a basic api key authentication for now.
+The server is implemented in Express and Typescript. All routes are protected
+with configurable authentication strategies.
+
+## Authentication
+
+The server supports two optional authentication strategies:
+
+### 1. API Key Authentication (Default: Enabled)
+
+On first run, the server generates a random API key and saves it to `.secret` in
+the current working directory. Use this key in the `x-api-key` header:
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" http://localhost:3000/api/tabs/list
+```
+
+### 2. JWT Bearer Token Authentication (Default: Disabled)
+
+The server can verify external JWT tokens (issued by another service). Configure
+JWT verification in `config.json` (see `config.json.example` for a template):
+
+```json
+{
+  "chromePath": "/path/to/chrome",
+  "port": 3000,
+  "auth": {
+    "apiKey": {
+      "enabled": true
+    },
+    "jwt": {
+      "enabled": true,
+      "jwksUrl": "https://your-auth-server.com/.well-known/jwks.json",
+      "issuer": "https://your-auth-server.com",
+      "audience": "https://your-api-domain.com"
+    }
+  }
+}
+```
+
+Use JWT tokens in the `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" http://localhost:3000/api/tabs/list
+```
+
+Both strategies can be enabled simultaneously. If both are enabled, either valid
+API key OR valid JWT token will grant access.
+
+### MCP Server Authentication
 
 To interact and test the MCP server, you can use:
 
@@ -69,8 +116,11 @@ To interact and test the MCP server, you can use:
 npx @modelcontextprotocol/inspector
 ```
 
-And in the UI, ensure "Transport Type" is set to `Streamable HTTP` and also add
-the API key in `.secret` to the headers, with key name: `x-api-key`.
+In the UI, ensure "Transport Type" is set to `Streamable HTTP` and add
+authentication headers:
+
+- For API Key: Add `x-api-key` header with the key from `.secret`
+- For JWT: Add `Authorization` header with value `Bearer YOUR_JWT_TOKEN`
 
 ## Platforms
 
@@ -139,9 +189,8 @@ a level that the code is readable and easy to reason about.
 ## References
 
 - <https://github.com/expressjs/express>
-- <https://github.com/better-auth/better-auth>
-- <https://www.better-auth.com/docs/integrations/express>
 - <https://www.npmjs.com/package/puppeteer-core>
+- <https://github.com/panva/jose> - JWT verification library
 - <https://github.com/mbalabash/find-chrome-bin>
 - <https://github.com/jellydn/next-swagger-doc>
 - <https://github.com/vercel/pkg>

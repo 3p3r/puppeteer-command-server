@@ -1,0 +1,15 @@
+{
+  "chromePath": null,
+  "port": 3000,
+  "auth": {
+    "apiKey": {
+      "enabled": true
+    },
+    "jwt": {
+      "enabled": false,
+      "jwksUrl": "https://your-auth-server.com/.well-known/jwks.json",
+      "issuer": "https://your-auth-server.com",
+      "audience": "https://your-api-domain.com"
+    }
+  }
+}

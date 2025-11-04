@@ -9,17 +9,30 @@ describe('Tab Routes - Request Validation', () => {
     app = express();
     app.use(express.json());
 
-    // Simple auth middleware for testing
+    // Simple auth middleware for testing (supports both API key and JWT)
     app.use((req, res, next) => {
       const apiKey = req.headers['x-api-key'];
-      if (!apiKey || apiKey !== 'test-key') {
-        return res.status(401).json({
-          success: false,
-          error: 'Unauthorized: Invalid or missing API key',
-          code: 'INVALID_API_KEY'
-        });
+      const authHeader = req.headers.authorization as string;
+
+      // Check API key
+      if (apiKey === 'test-key') {
+        return next();
       }
-      return next();
+
+      // Check Bearer token
+      if (
+        authHeader &&
+        authHeader.startsWith('Bearer ') &&
+        authHeader === 'Bearer test-jwt-token'
+      ) {
+        return next();
+      }
+
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized: Invalid or missing API key',
+        code: 'INVALID_API_KEY'
+      });
     });
 
     // Mock route handlers for validation testing
@@ -170,6 +183,34 @@ describe('Tab Routes - Request Validation', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
+    });
+
+    it('should accept requests with valid JWT Bearer token', async () => {
+      const response = await request(app)
+        .post('/api/tabs/open')
+        .set('Authorization', 'Bearer test-jwt-token')
+        .send({ url: 'https://example.com' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should reject requests with invalid JWT Bearer token', async () => {
+      const response = await request(app)
+        .post('/api/tabs/open')
+        .set('Authorization', 'Bearer invalid-token')
+        .send({ url: 'https://example.com' });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('should reject requests with malformed Authorization header', async () => {
+      const response = await request(app)
+        .post('/api/tabs/open')
+        .set('Authorization', 'InvalidFormat')
+        .send({ url: 'https://example.com' });
+
+      expect(response.status).toBe(401);
     });
   });
 

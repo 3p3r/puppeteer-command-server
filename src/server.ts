@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { authenticateApiKey } from './auth/index.js';
+import { createAuthMiddleware } from './auth/index.js';
 import { loadConfig } from './config/index.js';
 import { initializeMcpServer } from './mcp/index.js';
 import { initializeTabsRoutes, tabsRouter } from './routes/tabs.js';
@@ -39,6 +39,9 @@ app.use(
 // Load configuration
 const config = loadConfig();
 
+// Create authentication middleware
+const authenticate = createAuthMiddleware(config);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -65,13 +68,24 @@ const swaggerSpec = swaggerJsdoc({
         ApiKeyAuth: {
           type: 'apiKey',
           in: 'header',
-          name: 'x-api-key'
+          name: 'x-api-key',
+          description: 'API key authentication (enabled by default)'
+        },
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description:
+            'JWT Bearer token authentication (disabled by default, configure in config.json)'
         }
       }
     },
     security: [
       {
         ApiKeyAuth: []
+      },
+      {
+        BearerAuth: []
       }
     ],
     tags: [
@@ -106,8 +120,8 @@ app.get('/swagger.json', (_req, res) => {
 initializeTabsRoutes(config.chromePath);
 
 // API routes with authentication
-app.use('/api/tabs', authenticateApiKey, tabsRouter);
-app.use('/api/resources', authenticateApiKey, resourcesRouter);
+app.use('/api/tabs', authenticate, tabsRouter);
+app.use('/api/resources', authenticate, resourcesRouter);
 
 // MCP server setup
 const mcpServerFactory = () => initializeMcpServer(config.chromePath);
@@ -115,7 +129,7 @@ const mcpServerFactory = () => initializeMcpServer(config.chromePath);
 // Apply authentication to MCP endpoints
 app.post(
   '/mcp',
-  authenticateApiKey,
+  authenticate,
   statelessHandler(mcpServerFactory, {
     onError: (error: Error) => {
       console.error(`[MCP] Error: ${error.message}`);
