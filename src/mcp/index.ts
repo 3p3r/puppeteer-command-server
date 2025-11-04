@@ -6,8 +6,7 @@ import {
   ReadResourceRequestSchema,
   type Resource
 } from '@modelcontextprotocol/sdk/types.js';
-
-const ALL_IMAGES = new Map<string, { list: Resource; read: Resource }>();
+import { ALL_IMAGES } from '../routes/resources.js';
 
 export function initializeMcpServer(chromePath?: string | null): McpServer {
   const browserManager = BrowserManagerSingleton(chromePath);
@@ -545,6 +544,65 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
           {
             type: 'text',
             text: JSON.stringify({ success: true, html })
+          }
+        ]
+      };
+    }
+  );
+
+  mcp.tool(
+    'browser_close_all_tabs',
+    'Close all currently open browser tabs and cleanup all browser instances. This operation closes every tab managed by the browser manager and terminates all browser processes. Useful for cleanup operations, resetting browser state, or freeing resources when done with automation tasks.',
+    {},
+    async () => {
+      await browserManager.closeAllTabs();
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  mcp.tool(
+    'browser_clean_resource',
+    'Remove a specific screenshot resource from the resource cache by its URI. Once removed, the resource will no longer be available via the MCP resources API. Use this to free up memory or remove outdated screenshots.',
+    {
+      uri: z
+        .string()
+        .describe(
+          'Resource URI to remove (e.g., "mcp://browser_screenshots/tab-id/timestamp.png")'
+        )
+    },
+    async args => {
+      const existed = ALL_IMAGES.has(args.uri);
+      ALL_IMAGES.delete(args.uri);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true, removed: existed })
+          }
+        ]
+      };
+    }
+  );
+
+  mcp.tool(
+    'browser_clean_all_resources',
+    'Remove all screenshot resources from the resource cache. This clears the entire resource store, making all previously captured screenshots unavailable via the MCP resources API. Useful for cleanup operations or freeing memory when managing many screenshots.',
+    {},
+    async () => {
+      const count = ALL_IMAGES.size;
+      ALL_IMAGES.clear();
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true, count })
           }
         ]
       };

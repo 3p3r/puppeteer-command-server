@@ -646,6 +646,29 @@ router.delete('/close/:tabId', async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /api/tabs/closeAll:
+ *   delete:
+ *     summary: Close all open tabs
+ *     tags: [Tabs]
+ *     responses:
+ *       200:
+ *         description: All tabs closed successfully
+ */
+router.delete('/closeAll', async (_req: Request, res: Response) => {
+  try {
+    await browserManager.closeAllTabs();
+
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
  * /api/tabs/bringToFront/{tabId}:
  *   post:
  *     summary: Bring tab to front

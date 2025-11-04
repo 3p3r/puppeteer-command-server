@@ -426,6 +426,30 @@ export class BrowserManager {
     return tabs;
   }
 
+  async closeAllTabs(): Promise<void> {
+    try {
+      // Close all tabs
+      const tabIds = Array.from(this.tabs.keys());
+      for (const tabId of tabIds) {
+        const tab = this.tabs.get(tabId);
+        if (tab) {
+          await tab.page.close();
+          this.tabs.delete(tabId);
+        }
+      }
+
+      // Close all browsers
+      for (const [headless, browser] of this.browsers) {
+        if (browser) {
+          await browser.close();
+          this.browsers.set(headless, null);
+        }
+      }
+    } catch (error) {
+      throw new BrowserError(`Failed to close all tabs: ${error}`);
+    }
+  }
+
   async close(): Promise<void> {
     for (const [headless, browser] of this.browsers) {
       if (browser) {

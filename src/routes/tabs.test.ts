@@ -133,6 +133,10 @@ describe('Tab Routes - Request Validation', () => {
         data: { html: '<!DOCTYPE html><html><body>Test</body></html>' }
       });
     });
+
+    app.delete('/api/tabs/closeAll', (_req, res) => {
+      return res.json({ success: true });
+    });
   });
 
   describe('Authentication', () => {
@@ -351,6 +355,15 @@ describe('Tab Routes - Request Validation', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.html).toBe('<!DOCTYPE html><html><body>Test</body></html>');
+    });
+
+    it('should return 200 for valid closeAll request', async () => {
+      const response = await request(app)
+        .delete('/api/tabs/closeAll')
+        .set('x-api-key', 'test-key');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
     });
   });
 });

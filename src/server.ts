@@ -10,6 +10,7 @@ import { authenticateApiKey } from './auth/index.js';
 import { loadConfig } from './config/index.js';
 import { initializeMcpServer } from './mcp/index.js';
 import { initializeTabsRoutes, tabsRouter } from './routes/tabs.js';
+import { resourcesRouter } from './routes/resources.js';
 
 const app = express();
 
@@ -77,6 +78,10 @@ const swaggerSpec = swaggerJsdoc({
       {
         name: 'Tabs',
         description: 'Browser tab operations'
+      },
+      {
+        name: 'Resources',
+        description: 'Screenshot resource management'
       }
     ]
   },
@@ -102,6 +107,7 @@ initializeTabsRoutes(config.chromePath);
 
 // API routes with authentication
 app.use('/api/tabs', authenticateApiKey, tabsRouter);
+app.use('/api/resources', authenticateApiKey, resourcesRouter);
 
 // MCP server setup
 const mcpServerFactory = () => initializeMcpServer(config.chromePath);

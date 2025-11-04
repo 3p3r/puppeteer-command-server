@@ -44,6 +44,7 @@ Assuming access to the path of the Chrome executable, the server offers this API
 - `tabs/select/:tabId`: selects an option in a dropdown at specified selector in the tab with the given ID
 - `tabs/eval/:tabId`: evaluates JavaScript in the context of the tab with the given ID
 - `tabs/close/:tabId`: closes the tab with the given ID
+- `tabs/closeAll`: closes all open tabs
 - `tabs/bringToFront/:tabId`: brings the tab with the given ID to front
 - `tabs/focus/:tabId`: focuses on a specific element via selector in the tab with the given ID
 - `tabs/goBack/:tabId`: navigates back in browser history for the tab with the given ID
@@ -54,6 +55,8 @@ Assuming access to the path of the Chrome executable, the server offers this API
 - `tabs/waitForNavigation/:tabId`: waits for navigation to complete in the tab with the given ID
 - `tabs/url/:tabId`: gets the current URL of the tab with the given ID
 - `tabs/html/:tabId`: gets the current HTML content of the tab with the given ID
+- `resources/clean`: removes a specific screenshot resource by URI
+- `resources/cleanAll`: removes all screenshot resources
 
 Browser automation happens through Puppeteer. Session management is automatic.
 
