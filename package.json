@@ -20,7 +20,13 @@
     "check:fix": "biome check --write ."
   },
   "pkg": {
-    "assets": ["dist/server.js", "src/routes/*.ts", "node_modules/swagger-ui-dist/**/*"]
+    "assets": [
+      "dist/server.js",
+      "src/routes/*.ts",
+      "node_modules/swagger-ui-dist/**/*",
+      "node_modules/puppeteer-extra/**/*",
+      "node_modules/puppeteer-extra-*/**/*"
+    ]
   },
   "repository": {
     "type": "git",
@@ -64,6 +70,10 @@
     "esbuild": "^0.25.11",
     "npm-run-all": "^4.1.5",
     "pkg": "^5.8.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-anonymize-ua": "^2.4.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "puppeteer-extra-plugin-user-preferences": "^2.4.1",
     "supertest": "^6.3.3",
     "tsx": "^4.20.6",
     "typescript": "^5.3.0",

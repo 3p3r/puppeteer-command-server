@@ -3,7 +3,12 @@ import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import memoize from 'lodash/memoize.js';
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import AnonymizeUA from 'puppeteer-extra-plugin-anonymize-ua';
+// @ts-expect-error no types
+import UserPreferences from 'puppeteer-extra-plugin-user-preferences';
+import type { Browser, Page } from 'puppeteer-core';
 import { findChromeBrowser } from '../chrome/FindChrome.js';
 import {
   BrowserError,
@@ -11,6 +16,23 @@ import {
   type TabInfo,
   TabNotFoundError
 } from '../types/index.js';
+
+puppeteer.use(StealthPlugin());
+puppeteer.use(AnonymizeUA());
+puppeteer.use(
+  UserPreferences({
+    userPrefs: {
+      download: {
+        prompt_for_download: false,
+        open_pdf_in_system_reader: true,
+        default_directory: process.cwd()
+      },
+      plugins: {
+        always_open_pdf_externally: true
+      }
+    }
+  })
+);
 
 export class BrowserManager {
   private browsers: Map<boolean, Browser | null> = new Map();
