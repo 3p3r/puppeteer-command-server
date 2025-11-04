@@ -3,6 +3,10 @@
 Exposes basic browser automation through HTTP and MCP for generative UI apps.
 
 - [Methodology](#methodology)
+- [Authentication](#authentication)
+  - [1. API Key Authentication (Default: Enabled)](#1-api-key-authentication-default-enabled)
+  - [2. JWT Bearer Token Authentication (Default: Disabled)](#2-jwt-bearer-token-authentication-default-disabled)
+  - [MCP Server Authentication](#mcp-server-authentication)
 - [Platforms](#platforms)
 - [Distribution](#distribution)
 - [Environment](#environment)
@@ -188,13 +192,12 @@ a level that the code is readable and easy to reason about.
 
 ## References
 
-- <https://github.com/expressjs/express>
-- <https://www.npmjs.com/package/puppeteer-core>
+- <https://github.com/expressjs/express> - To build the HTTP server
+- <https://www.npmjs.com/package/puppeteer-core> - To control Chrome browser
+- <https://www.npmjs.com/package/puppeteer-extra> - Puppeteer plugins framework
 - <https://github.com/panva/jose> - JWT verification library
-- <https://github.com/mbalabash/find-chrome-bin>
-- <https://github.com/jellydn/next-swagger-doc>
-- <https://github.com/vercel/pkg>
-- <https://github.com/upx/upx>
+- <https://github.com/vercel/pkg> - To compile Node.js project into binaries
+- <https://github.com/upx/upx> - Executable compressor
 
 ## License
 
