@@ -1,5 +1,5 @@
 import { type Request, type Response, Router } from 'express';
-import { type ApiResponse } from '../types/index.js';
+import type { ApiResponse } from '../types/index.js';
 
 const router = Router();
 
@@ -9,7 +9,7 @@ export const ALL_IMAGES = new Map<string, { list: any; read: any }>();
 /**
  * @swagger
  * /api/resources/clean:
- *   post:
+ *   delete:
  *     summary: Remove a specific screenshot resource by URI
  *     tags: [Resources]
  *     requestBody:
@@ -28,7 +28,7 @@ export const ALL_IMAGES = new Map<string, { list: any; read: any }>();
  *       400:
  *         description: URI is required
  */
-router.post('/clean', (req: Request, res: Response) => {
+router.delete('/clean', (req: Request, res: Response) => {
   try {
     const { uri } = req.body;
 
@@ -59,14 +59,14 @@ router.post('/clean', (req: Request, res: Response) => {
 /**
  * @swagger
  * /api/resources/cleanAll:
- *   post:
+ *   delete:
  *     summary: Remove all screenshot resources
  *     tags: [Resources]
  *     responses:
  *       200:
  *         description: All resources removed successfully
  */
-router.post('/cleanAll', (_req: Request, res: Response) => {
+router.delete('/cleanAll', (_req: Request, res: Response) => {
   try {
     const count = ALL_IMAGES.size;
     ALL_IMAGES.clear();

@@ -24,7 +24,7 @@ describe('Resources Routes - Request Validation', () => {
     });
 
     // Mock route handlers for validation testing
-    app.post('/api/resources/clean', (req, res) => {
+    app.delete('/api/resources/clean', (req, res) => {
       const { uri } = req.body;
 
       if (!uri) {
@@ -43,7 +43,7 @@ describe('Resources Routes - Request Validation', () => {
       });
     });
 
-    app.post('/api/resources/cleanAll', (_req, res) => {
+    app.delete('/api/resources/cleanAll', (_req, res) => {
       const count = ALL_IMAGES.size;
       ALL_IMAGES.clear();
 
@@ -59,7 +59,7 @@ describe('Resources Routes - Request Validation', () => {
 
   describe('Authentication', () => {
     it('should reject requests without API key', async () => {
-      const response = await request(app).post('/api/resources/clean').send({ uri: 'test-uri' });
+      const response = await request(app).delete('/api/resources/clean').send({ uri: 'test-uri' });
 
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
@@ -71,7 +71,7 @@ describe('Resources Routes - Request Validation', () => {
 
     it('should reject requests with invalid API key', async () => {
       const response = await request(app)
-        .post('/api/resources/clean')
+        .delete('/api/resources/clean')
         .set('x-api-key', 'invalid-key')
         .send({ uri: 'test-uri' });
 
@@ -80,7 +80,7 @@ describe('Resources Routes - Request Validation', () => {
 
     it('should accept requests with valid API key', async () => {
       const response = await request(app)
-        .post('/api/resources/clean')
+        .delete('/api/resources/clean')
         .set('x-api-key', 'test-key')
         .send({ uri: 'test-uri' });
 
@@ -92,7 +92,7 @@ describe('Resources Routes - Request Validation', () => {
   describe('Clean Resource', () => {
     it('should return 400 for missing URI', async () => {
       const response = await request(app)
-        .post('/api/resources/clean')
+        .delete('/api/resources/clean')
         .set('x-api-key', 'test-key')
         .send({});
 
@@ -105,7 +105,7 @@ describe('Resources Routes - Request Validation', () => {
 
     it('should return success when URI does not exist', async () => {
       const response = await request(app)
-        .post('/api/resources/clean')
+        .delete('/api/resources/clean')
         .set('x-api-key', 'test-key')
         .send({ uri: 'non-existent-uri' });
 
@@ -125,7 +125,7 @@ describe('Resources Routes - Request Validation', () => {
       });
 
       const response = await request(app)
-        .post('/api/resources/clean')
+        .delete('/api/resources/clean')
         .set('x-api-key', 'test-key')
         .send({ uri: testUri });
 
@@ -141,7 +141,7 @@ describe('Resources Routes - Request Validation', () => {
   describe('Clean All Resources', () => {
     it('should return success with count of 0 when no resources exist', async () => {
       const response = await request(app)
-        .post('/api/resources/cleanAll')
+        .delete('/api/resources/cleanAll')
         .set('x-api-key', 'test-key')
         .send({});
 
@@ -170,7 +170,7 @@ describe('Resources Routes - Request Validation', () => {
       expect(ALL_IMAGES.size).toBe(3);
 
       const response = await request(app)
-        .post('/api/resources/cleanAll')
+        .delete('/api/resources/cleanAll')
         .set('x-api-key', 'test-key')
         .send({});
 
