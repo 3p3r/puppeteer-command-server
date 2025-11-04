@@ -6,55 +6,110 @@ import { name } from '../package.json';
 const BUILD_DIR = path.join(__dirname, '../build');
 
 async function main() {
+  // Parse CLI arguments
+  const args = process.argv.slice(2);
+  const fastMode = args.includes('--fast');
+  const buildWin = args.includes('--win');
+  const buildMac = args.includes('--mac');
+  const buildLinux = args.includes('--linux');
+  const buildAll = !buildWin && !buildMac && !buildLinux;
+
   console.log(chalk.blue('Cleaning build directory...'));
   await $`rm -rf ${BUILD_DIR}`;
   await $`mkdir -p ${BUILD_DIR}`;
 
   console.log(chalk.blue(`Compiling ${name}...`));
-  await Promise.all([
-    $`npx pkg --public dist/server.js -c package.json -C Brotli -t "node18-macos-arm64" -o ${path.join(BUILD_DIR, name)}-macos-arm64`,
-    $`npx pkg --public dist/server.js -c package.json -C Brotli -t "node18-macos-x64" -o ${path.join(BUILD_DIR, name)}-macos-x64`,
-    $`npx pkg --public dist/server.js -c package.json -C Brotli -t "node18-linux-x64" -o ${path.join(BUILD_DIR, 'linux', 'pcs')}`,
-    $`npx pkg --public dist/server.js -c package.json -C Brotli -t "node18-win-x64" -o ${path.join(BUILD_DIR, 'win', 'pcs.exe')}`
-  ]);
-
-  async function findLipo() {
-    const lipoPath = await Promise.race([
-      which('lipo').catch(() => null),
-      which('llvm-lipo').catch(() => null),
-      which('llvm-lipo-13').catch(() => null),
-      which('llvm-lipo-14').catch(() => null),
-      which('llvm-lipo-15').catch(() => null),
-      which('lipo.exe').catch(() => null)
-    ]);
-    return lipoPath;
+  
+  // Build compression flags based on fast mode
+  const compressionArgs = fastMode ? [] : ['-C', 'Brotli'];
+  
+  // Build platform-specific binaries
+  const pkgCommands = [];
+  
+  if (buildMac || buildAll) {
+    pkgCommands.push(
+      $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-macos-arm64" -o ${path.join(BUILD_DIR, name)}-macos-arm64`,
+      $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-macos-x64" -o ${path.join(BUILD_DIR, name)}-macos-x64`
+    );
   }
+  
+  if (buildLinux || buildAll) {
+    pkgCommands.push(
+      $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-linux-x64" -o ${path.join(BUILD_DIR, 'linux', 'pcs')}`
+    );
+  }
+  
+  if (buildWin || buildAll) {
+    pkgCommands.push(
+      $`npx pkg --public dist/server.js -c package.json ${compressionArgs} -t "node18-win-x64" -o ${path.join(BUILD_DIR, 'win', 'pcs.exe')}`
+    );
+  }
+  
+  await Promise.all(pkgCommands);
 
-  const lipo = await findLipo();
-  console.log(chalk.blue(`Found lipo at: ${lipo ?? 'not found'}`));
+  // Find upx early for macOS build process
+  const upx = await which('upx').catch(() => null);
+  const upxLevel = fastMode ? '-1' : '-9';
 
-  await within(async () => {
-    $.cwd = BUILD_DIR;
-    if (lipo) {
-      console.log(chalk.blue('Creating universal binary using lipo...'));
-      await $`${lipo} -create -output ${name} ${name}-macos-arm64 ${name}-macos-x64`;
-      await $`rm ${name}-macos-arm64 ${name}-macos-x64`;
-      await $`mkdir -p mac`;
-      await $`mv ${name} mac/pcs`;
-    } else {
-      throw new Error('lipo tool not found. Cannot create universal binary.');
+  // Process macOS binaries: upx individual binaries, then lipo
+  if (buildMac || buildAll) {
+    async function findLipo() {
+      const lipoPath = await Promise.race([
+        which('lipo').catch(() => null),
+        which('llvm-lipo').catch(() => null),
+        which('llvm-lipo-13').catch(() => null),
+        which('llvm-lipo-14').catch(() => null),
+        which('llvm-lipo-15').catch(() => null),
+        which('lipo.exe').catch(() => null)
+      ]);
+      return lipoPath;
     }
-  });
+
+    const lipo = await findLipo();
+    console.log(chalk.blue(`Found lipo at: ${lipo ?? 'not found'}`));
+
+    await within(async () => {
+      $.cwd = BUILD_DIR;
+      
+      // Apply upx to individual arch binaries before lipo
+      if (upx) {
+        console.log(chalk.blue(`Compressing individual macOS binaries with upx ${upxLevel}...`));
+        await Promise.all([
+          $`${upx} ${upxLevel} ${name}-macos-arm64 --force-macos`,
+          $`${upx} ${upxLevel} ${name}-macos-x64 --force-macos`
+        ]);
+      }
+      
+      if (lipo) {
+        console.log(chalk.blue('Creating universal binary using lipo...'));
+        await $`${lipo} -create -output ${name} ${name}-macos-arm64 ${name}-macos-x64`;
+        await $`rm ${name}-macos-arm64 ${name}-macos-x64`;
+        await $`mkdir -p mac`;
+        await $`mv ${name} mac/pcs`;
+      } else {
+        throw new Error('lipo tool not found. Cannot create universal binary.');
+      }
+    });
+  }
 
   // Copy binaries to sig/build/ for Go embedding
   console.log(chalk.blue('Copying binaries to sig/build/ for Go embedding...'));
   const SIG_BUILD_DIR = path.join(__dirname, '../sig/build');
-  await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'linux')}`;
-  await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'mac')}`;
-  await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'win')}`;
-  await $`cp ${path.join(BUILD_DIR, 'linux', 'pcs')} ${path.join(SIG_BUILD_DIR, 'linux', 'pcs')}`;
-  await $`cp ${path.join(BUILD_DIR, 'mac', 'pcs')} ${path.join(SIG_BUILD_DIR, 'mac', 'pcs')}`;
-  await $`cp ${path.join(BUILD_DIR, 'win', 'pcs.exe')} ${path.join(SIG_BUILD_DIR, 'win', 'pcs.exe')}`;
+  
+  if (buildLinux || buildAll) {
+    await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'linux')}`;
+    await $`cp ${path.join(BUILD_DIR, 'linux', 'pcs')} ${path.join(SIG_BUILD_DIR, 'linux', 'pcs')}`;
+  }
+  
+  if (buildMac || buildAll) {
+    await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'mac')}`;
+    await $`cp ${path.join(BUILD_DIR, 'mac', 'pcs')} ${path.join(SIG_BUILD_DIR, 'mac', 'pcs')}`;
+  }
+  
+  if (buildWin || buildAll) {
+    await $`mkdir -p ${path.join(SIG_BUILD_DIR, 'win')}`;
+    await $`cp ${path.join(BUILD_DIR, 'win', 'pcs.exe')} ${path.join(SIG_BUILD_DIR, 'win', 'pcs.exe')}`;
+  }
 
   // Compile Go binaries for all platforms
   async function findGo() {
@@ -69,30 +124,47 @@ async function main() {
 
     const SIG_BUILD_OUTPUT_DIR = path.join(BUILD_DIR, 'sig');
     await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}`;
-    await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/linux`;
-    await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/mac`;
-    await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/win`;
+    
+    if (buildLinux || buildAll) {
+      await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/linux`;
+    }
+    if (buildMac || buildAll) {
+      await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/mac`;
+    }
+    if (buildWin || buildAll) {
+      await $`mkdir -p ${SIG_BUILD_OUTPUT_DIR}/win`;
+    }
 
     const repoRoot = path.join(__dirname, '..');
 
-    // Build for Linux
+    // Build for selected platforms
     await within(async () => {
       $.cwd = repoRoot;
-      await Promise.all([
-        (async () => {
+      const goBuilds = [];
+      
+      if (buildLinux || buildAll) {
+        goBuilds.push((async () => {
           console.log(chalk.blue('Building Go binary for Linux...'));
           await $`GOOS=linux GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux/sig')} ./sig`;
-        })(),
-        (async () => {
+        })());
+      }
+      
+      if (buildMac || buildAll) {
+        goBuilds.push((async () => {
           console.log(chalk.blue('Building Go binary for macOS...'));
           // todo: use lipo here
           await $`GOOS=darwin GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac/sig')} ./sig`;
-        })(),
-        (async () => {
+        })());
+      }
+      
+      if (buildWin || buildAll) {
+        goBuilds.push((async () => {
           console.log(chalk.blue('Building Go binary for Windows...'));
           await $`GOOS=windows GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'win/sig.exe')} ./sig`;
-        })()
-      ]);
+        })());
+      }
+      
+      await Promise.all(goBuilds);
     });
 
     console.log(chalk.green('Go wrapper binaries compiled successfully.'));
@@ -103,21 +175,39 @@ async function main() {
   console.log(chalk.green(`Compiled ${name} successfully.`));
 
   // compress sig binaries with upx if available
-  const upx = await which('upx').catch(() => null);
   if (upx) {
-    console.log(chalk.blue('Compressing binaries with upx...'));
+    console.log(chalk.blue(`Compressing sig binaries with upx ${upxLevel}...`));
     const SIG_BUILD_OUTPUT_DIR = path.join(BUILD_DIR, 'sig');
     const MIN_BUILD_OUTPUT_DIR = path.join(BUILD_DIR, 'min');
     await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}`;
-    await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/linux`;
-    await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/mac`;
-    await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/win`;
-
-    await Promise.all([
-      $`${upx} -9 ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'linux', 'sig')}`,
-      $`${upx} -9 ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'sig')} --force-macos`,
-      $`${upx} -9 ${path.join(SIG_BUILD_OUTPUT_DIR, 'win', 'sig.exe')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'win', 'sig.exe')}`
-    ]);
+    
+    const upxCommands = [];
+    
+    if (buildLinux || buildAll) {
+      await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/linux`;
+      upxCommands.push(
+        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'linux', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'linux', 'sig')}`
+      );
+    }
+    
+    if (buildMac || buildAll) {
+      await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/mac`;
+      upxCommands.push(
+        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'sig')} --force-macos`
+      );
+      // upxCommands.push(
+      //   $`cp ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac', 'sig')} ${path.join(MIN_BUILD_OUTPUT_DIR, 'mac', 'sig')}`
+      // );
+    }
+    
+    if (buildWin || buildAll) {
+      await $`mkdir -p ${MIN_BUILD_OUTPUT_DIR}/win`;
+      upxCommands.push(
+        $`${upx} ${upxLevel} ${path.join(SIG_BUILD_OUTPUT_DIR, 'win', 'sig.exe')} -o ${path.join(MIN_BUILD_OUTPUT_DIR, 'win', 'sig.exe')}`
+      );
+    }
+    
+    await Promise.all(upxCommands);
     console.log(chalk.green('Binaries compressed successfully.'));
   } else {
     console.log(chalk.yellow('upx not found. Skipping binary compression.'));

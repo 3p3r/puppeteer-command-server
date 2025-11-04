@@ -2,6 +2,16 @@
 
 Exposes basic browser automation through HTTP and MCP for generative UI apps.
 
+- [Methodology](#methodology)
+- [Platforms](#platforms)
+- [Distribution](#distribution)
+- [Environment](#environment)
+- [Development](#development)
+  - [Building Binaries](#building-binaries)
+- [Implementation](#implementation)
+- [References](#references)
+- [License](#license)
+
 ## Methodology
 
 This project on launch exposes the following endpoints:
@@ -84,6 +94,38 @@ dependencies beyond the target platform's standard libraries.
 - `Go` version 1.16+ (for signature generation)
 - `lipo` (MacOS only) or `llvm-lipo` (non MacOS)
 - `upx` (for executable compression)
+
+## Development
+
+### Building Binaries
+
+Compile the project into native binaries:
+
+```bash
+npm run compile
+```
+
+**Flags:**
+
+- `--fast`: Fast build mode (skips Brotli compression, uses UPX level 1)
+- `--linux`: Build Linux binaries only
+- `--mac`: Build macOS binaries only
+- `--win`: Build Windows binaries only
+
+Platform flags can be combined. Without any platform flag, all platforms are built.
+
+**Examples:**
+
+```bash
+# Fast build for Linux only
+npm run compile -- --linux --fast
+
+# Build for Windows and macOS
+npm run compile -- --win --mac
+
+# Full build (all platforms, maximum compression)
+npm run compile
+```
 
 ## Implementation
 
