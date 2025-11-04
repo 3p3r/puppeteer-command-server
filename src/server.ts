@@ -1,4 +1,6 @@
+import cors from 'cors';
 import helmet from 'helmet';
+import morgan from 'morgan';
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -10,6 +12,16 @@ import { statelessHandler } from 'express-mcp-handler';
 import path from 'path';
 
 const app = express();
+
+app.use(morgan('combined'));
+app.use(
+  cors({
+    origin: true,
+    methods: '*',
+    allowedHeaders: 'Authorization, Origin, Content-Type, Accept, *'
+  })
+);
+app.options('*', cors());
 
 const cspDefaults = helmet.contentSecurityPolicy.getDefaultDirectives();
 delete cspDefaults['upgrade-insecure-requests'];
@@ -78,21 +90,17 @@ app.use(
   swaggerUi.setup(swaggerSpec)
 );
 
+// Serve the swagger spec JSON
+app.get('/swagger.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
 // Initialize browser manager and routes
 initializeTabsRoutes(config.chromePath);
 
 // API routes with authentication
 app.use('/api/tabs', authenticateApiKey, tabsRouter);
-
-// Reverse proxy for browser tabs
-app.use('/proxy/:tabId', authenticateApiKey, (_req, res) => {
-  // For now, we'll implement a simple proxy that forwards requests
-  // In a full implementation, this would use CDP to proxy through the browser tab
-  res.status(501).json({
-    success: false,
-    error: 'Proxy functionality not yet implemented'
-  });
-});
 
 // MCP server setup
 const mcpServerFactory = () => initializeMcpServer(config.chromePath);

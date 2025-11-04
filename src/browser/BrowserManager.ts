@@ -312,7 +312,11 @@ export class BrowserManager {
     }
   }
 
-  async waitForSelector(tabId: string, selector: string, options?: { timeout?: number; visible?: boolean }): Promise<void> {
+  async waitForSelector(
+    tabId: string,
+    selector: string,
+    options?: { timeout?: number; visible?: boolean }
+  ): Promise<void> {
     const tab = this.tabs.get(tabId);
     if (!tab) {
       throw new TabNotFoundError(tabId);
@@ -338,7 +342,10 @@ export class BrowserManager {
     }
   }
 
-  async waitForNavigation(tabId: string, options?: { timeout?: number; waitUntil?: string }): Promise<void> {
+  async waitForNavigation(
+    tabId: string,
+    options?: { timeout?: number; waitUntil?: string }
+  ): Promise<void> {
     const tab = this.tabs.get(tabId);
     if (!tab) {
       throw new TabNotFoundError(tabId);
