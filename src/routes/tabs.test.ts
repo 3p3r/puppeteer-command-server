@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Tab Routes - Request Validation', () => {
   let app: express.Application;
@@ -73,7 +73,7 @@ describe('Tab Routes - Request Validation', () => {
       return res.json({ success: true });
     });
 
-    app.post('/api/tabs/bringToFront/:tabId', (req, res) => {
+    app.post('/api/tabs/bringToFront/:tabId', (_req, res) => {
       return res.json({ success: true });
     });
 
@@ -87,15 +87,15 @@ describe('Tab Routes - Request Validation', () => {
       return res.json({ success: true });
     });
 
-    app.post('/api/tabs/goBack/:tabId', (req, res) => {
+    app.post('/api/tabs/goBack/:tabId', (_req, res) => {
       return res.json({ success: true });
     });
 
-    app.post('/api/tabs/goForward/:tabId', (req, res) => {
+    app.post('/api/tabs/goForward/:tabId', (_req, res) => {
       return res.json({ success: true });
     });
 
-    app.post('/api/tabs/reload/:tabId', (req, res) => {
+    app.post('/api/tabs/reload/:tabId', (_req, res) => {
       return res.json({ success: true });
     });
 
@@ -119,11 +119,11 @@ describe('Tab Routes - Request Validation', () => {
       return res.json({ success: true });
     });
 
-    app.post('/api/tabs/waitForNavigation/:tabId', (req, res) => {
+    app.post('/api/tabs/waitForNavigation/:tabId', (_req, res) => {
       return res.json({ success: true });
     });
 
-    app.get('/api/tabs/url/:tabId', (req, res) => {
+    app.get('/api/tabs/url/:tabId', (_req, res) => {
       return res.json({ success: true, data: { url: 'https://example.com' } });
     });
   });

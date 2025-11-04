@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { promisify } from 'node:util';
 
 const asyncExec = promisify(exec);
 
@@ -20,41 +20,41 @@ function isChromeLike(execPath: string): boolean {
 async function getDefaultBrowserPath(platform: string): Promise<string | null> {
   if (platform === 'win32') {
     try {
-      let { stdout } = await asyncExec(
+      const { stdout } = await asyncExec(
         'reg query HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice /v ProgId'
       );
-      let progId = stdout.trim().split(/\s+/).pop();
+      const progId = stdout.trim().split(/\s+/).pop();
       if (!progId) return null;
-      let { stdout: cmdOut } = await asyncExec(
+      const { stdout: cmdOut } = await asyncExec(
         `reg query "HKEY_CLASSES_ROOT\\${progId}\\shell\\open\\command" /ve`
       );
-      let match = cmdOut.match(/\"(.+?)\"/);
+      const match = cmdOut.match(/\"(.+?)\"/);
       if (match) return match[1] || null;
     } catch (e) {
       return null;
     }
   } else if (platform === 'darwin') {
     try {
-      let { stdout } = await asyncExec(
+      const { stdout } = await asyncExec(
         'defaults read com.apple.LaunchServices/com.apple.launchservices.secure | grep -o \'LSHandlerRoleAll = "[^"]*";\' | grep http'
       );
-      let match = stdout.match(/LSHandlerRoleAll = "([^"]*)";/);
+      const match = stdout.match(/LSHandlerRoleAll = "([^"]*)";/);
       if (!match) return null;
-      let bundleId = match[1];
-      let { stdout: appPathOut } = await asyncExec(
+      const bundleId = match[1];
+      const { stdout: appPathOut } = await asyncExec(
         `mdfind kMDItemCFBundleIdentifier = "${bundleId}"`
       );
-      let appPath = appPathOut.trim();
+      const appPath = appPathOut.trim();
       if (!appPath) return null;
-      let exeName = path.basename(appPath, '.app');
+      const exeName = path.basename(appPath, '.app');
       return path.join(appPath, 'Contents/MacOS', exeName);
     } catch (e) {
       return null;
     }
   } else if (platform === 'linux') {
     try {
-      let { stdout } = await asyncExec('xdg-settings get default-web-browser');
-      let desktopFile = stdout.trim();
+      const { stdout } = await asyncExec('xdg-settings get default-web-browser');
+      const desktopFile = stdout.trim();
       if (!desktopFile) return null;
       const locations = [
         path.join(os.homedir(), '.local/share/applications/'),
@@ -62,18 +62,18 @@ async function getDefaultBrowserPath(platform: string): Promise<string | null> {
         '/usr/local/share/applications/'
       ];
       let desktopPath: string | null = null;
-      for (let loc of locations) {
-        let p = path.join(loc, desktopFile);
+      for (const loc of locations) {
+        const p = path.join(loc, desktopFile);
         if (fs.existsSync(p)) {
           desktopPath = p;
           break;
         }
       }
       if (!desktopPath) return null;
-      let content = fs.readFileSync(desktopPath, 'utf8');
-      let execLine = content.split('\n').find(line => line.startsWith('Exec='));
+      const content = fs.readFileSync(desktopPath, 'utf8');
+      const execLine = content.split('\n').find(line => line.startsWith('Exec='));
       if (!execLine) return null;
-      let execPath = execLine.slice(5).trim().split(' ')[0];
+      const execPath = execLine.slice(5).trim().split(' ')[0];
       return execPath || null;
     } catch (e) {
       return null;
@@ -87,7 +87,7 @@ async function searchDesktopShortcuts(platform: string): Promise<string[]> {
   if (!fs.existsSync(desktopDir)) return [];
   const shortcuts: string[] = [];
   const files = fs.readdirSync(desktopDir);
-  for (let file of files) {
+  for (const file of files) {
     const fullPath = path.join(desktopDir, file);
     let target: string | undefined;
     if (platform === 'win32' && file.toLowerCase().endsWith('.lnk')) {
@@ -184,7 +184,7 @@ export async function findChromeBrowser(): Promise<string | null> {
   };
 
   const paths = knownPaths[platform] || [];
-  for (let p of paths) {
+  for (const p of paths) {
     if (fs.existsSync(p)) {
       return p;
     }
@@ -192,7 +192,7 @@ export async function findChromeBrowser(): Promise<string | null> {
 
   // Look for shortcuts on desktop
   const desktopTargets = await searchDesktopShortcuts(platform);
-  for (let target of desktopTargets) {
+  for (const target of desktopTargets) {
     if (fs.existsSync(target)) {
       return target;
     }

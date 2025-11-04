@@ -1,5 +1,5 @@
-import path from 'path';
-import { $, chalk, os, which, within } from 'zx';
+import path from 'node:path';
+import { os, $, chalk, which, within } from 'zx';
 
 import { name } from '../package.json';
 

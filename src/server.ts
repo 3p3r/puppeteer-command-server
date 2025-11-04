@@ -1,15 +1,15 @@
+import path from 'node:path';
 import cors from 'cors';
+import express from 'express';
+import { statelessHandler } from 'express-mcp-handler';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import express from 'express';
-import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 import { authenticateApiKey } from './auth/index.js';
 import { loadConfig } from './config/index.js';
-import { tabsRouter, initializeTabsRoutes } from './routes/tabs.js';
 import { initializeMcpServer } from './mcp/index.js';
-import { statelessHandler } from 'express-mcp-handler';
-import path from 'path';
+import { initializeTabsRoutes, tabsRouter } from './routes/tabs.js';
 
 const app = express();
 
@@ -24,6 +24,7 @@ app.use(
 app.options('*', cors());
 
 const cspDefaults = helmet.contentSecurityPolicy.getDefaultDirectives();
+// biome-ignore lint/performance/noDelete: swagger won't work otherwise.
 delete cspDefaults['upgrade-insecure-requests'];
 
 // fixes swagger ui in prod
@@ -85,7 +86,7 @@ const swaggerSpec = swaggerJsdoc({
 // Swagger documentation
 app.use(
   '/docs',
-  express.static(path.resolve(__dirname, `../node_modules/swagger-ui-dist/`), { index: false }),
+  express.static(path.resolve(__dirname, '../node_modules/swagger-ui-dist/'), { index: false }),
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec)
 );
@@ -114,7 +115,7 @@ app.post(
       console.error(`[MCP] Error: ${error.message}`);
     },
     onClose: () => {
-      console.log(`[MCP] Connection closed.`);
+      console.log('[MCP] Connection closed.');
     }
   })
 );
@@ -151,11 +152,11 @@ app.use('*', (_req, res) => {
 });
 
 // Start server
-app.listen(config.port, "0.0.0.0", () => {
+app.listen(config.port, '0.0.0.0', () => {
   console.log(`🚀 Puppeteer Command Server running on port ${config.port}`);
   console.log(`📚 API Documentation: http://localhost:${config.port}/docs`);
   console.log(`🔧 MCP Endpoint: http://localhost:${config.port}/mcp`);
-  console.log(`🔑 API Key generated and saved to .secret`);
+  console.log('🔑 API Key generated and saved to .secret');
 });
 
 export default app;

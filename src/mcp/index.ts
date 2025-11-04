@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
 import { z } from 'zod';
+import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
 
 export function initializeMcpServer(chromePath?: string | null): McpServer {
   const browserManager = BrowserManagerSingleton(chromePath);

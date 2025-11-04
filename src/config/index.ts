@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { Config } from '../types';
 
 const CONFIG_FILE = path.join(process.cwd(), 'config.json');

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { BrowserManager } from './BrowserManager.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { BrowserError, TabNotFoundError } from '../types/index.js';
+import { BrowserManager } from './BrowserManager.js';
 
 describe('BrowserManager', () => {
   let browserManager: BrowserManager;

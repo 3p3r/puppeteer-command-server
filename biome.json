@@ -11,7 +11,10 @@
         "noNonNullAssertion": "off"
       },
       "suspicious": {
-        "noExplicitAny": "warn"
+        "noExplicitAny": "off"
+      },
+      "complexity": {
+        "useLiteralKeys": "off"
       }
     }
   },

@@ -1,16 +1,16 @@
+import assert from 'node:assert';
+import { randomUUID } from 'node:crypto';
+import os from 'node:os';
+import path from 'node:path';
+import memoize from 'lodash/memoize.js';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
-import { randomUUID } from 'crypto';
+import { findChromeBrowser } from '../chrome/FindChrome.js';
 import {
-  type TabInfo,
-  type OpenTabRequest,
   BrowserError,
+  type OpenTabRequest,
+  type TabInfo,
   TabNotFoundError
 } from '../types/index.js';
-import { findChromeBrowser } from '../chrome/FindChrome.js';
-import os from 'os';
-import path from 'path';
-import assert from 'assert';
-import memoize from 'lodash/memoize.js';
 
 export class BrowserManager {
   private browsers: Map<boolean, Browser | null> = new Map();
@@ -23,7 +23,7 @@ export class BrowserManager {
     this.browsers.set(false, null); // visible
   }
 
-  async initialize(headless: boolean): Promise<void> {
+  async initialize(headless = true): Promise<void> {
     try {
       await this.close();
       const executablePath = await this.getChromePath();

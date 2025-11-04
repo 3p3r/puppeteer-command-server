@@ -1,20 +1,20 @@
-import { Router, Request, Response } from 'express';
-import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
+import { type Request, type Response, Router } from 'express';
+import { type BrowserManager, BrowserManagerSingleton } from '../browser/BrowserManager.js';
 import {
-  OpenTabRequest,
-  NavigateRequest,
-  ClickRequest,
-  HoverRequest,
-  FillRequest,
-  SelectRequest,
-  EvalRequest,
-  FocusRequest,
-  WaitForSelectorRequest,
-  WaitForFunctionRequest,
-  WaitForNavigationRequest,
-  ReloadRequest,
-  ApiResponse,
-  TabNotFoundError
+  type ApiResponse,
+  type ClickRequest,
+  type EvalRequest,
+  type FillRequest,
+  type FocusRequest,
+  type HoverRequest,
+  type NavigateRequest,
+  type OpenTabRequest,
+  type ReloadRequest,
+  type SelectRequest,
+  TabNotFoundError,
+  type WaitForFunctionRequest,
+  type WaitForNavigationRequest,
+  type WaitForSelectorRequest
 } from '../types/index.js';
 
 const router = Router();
@@ -945,8 +945,8 @@ router.post('/waitForSelector/:tabId', async (req: Request, res: Response) => {
     }
 
     await browserManager.waitForSelector(tabId, request.selector, {
-      timeout: request.timeout,
-      visible: request.visible
+      timeout: request.timeout ?? 30000,
+      visible: request.visible ?? false
     });
 
     return res.json({ success: true });
@@ -1012,7 +1012,7 @@ router.post('/waitForFunction/:tabId', async (req: Request, res: Response) => {
     }
 
     await browserManager.waitForFunction(tabId, request.functionScript, {
-      timeout: request.timeout
+      timeout: request.timeout ?? 30000
     });
 
     return res.json({ success: true });
@@ -1071,8 +1071,8 @@ router.post('/waitForNavigation/:tabId', async (req: Request, res: Response) => 
     }
 
     await browserManager.waitForNavigation(tabId, {
-      timeout: request.timeout,
-      waitUntil: request.waitUntil
+      timeout: request.timeout ?? 30000,
+      waitUntil: request.waitUntil ?? 'load'
     });
 
     return res.json({ success: true });
