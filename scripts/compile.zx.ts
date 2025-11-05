@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { os, $, chalk, which, within } from 'zx';
+import { $, chalk, which, within } from 'zx';
 
 import { name } from '../package.json';
 
@@ -25,6 +25,11 @@ async function main() {
 
   // Build platform-specific binaries
   const pkgCommands = [];
+
+  // add "scripts/ldid-static" and "scripts/upx-static" to PATH for pkg to find ldid and upx
+  const upxPath = path.join(__dirname, 'upx-static');
+  const ldidPath = path.join(__dirname, 'ldid-static');
+  process.env.PATH = `${ldidPath}${path.delimiter}${upxPath}${path.delimiter}${process.env.PATH}`;
 
   if (buildMac || buildAll) {
     pkgCommands.push(

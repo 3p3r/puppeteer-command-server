@@ -180,6 +180,7 @@ dependencies beyond the target platform's standard libraries.
 - `Go` version 1.16+ (for signature generation)
 - `lipo` (MacOS only) or `llvm-lipo` (non MacOS)
 - `upx` (for executable compression)
+- `Docker` (to build `ldid` if you don't have MacOS)
 
 ## Development
 
@@ -319,9 +320,7 @@ Add this to your VS Code MCP config file. See [VS Code MCP docs](https://code.vi
 </details>
 
 <details>
-<summary>
-<b>Install in Cline</b>
-</summary>
+<summary><b>Install in Cline</b></summary>
 
 You can directly edit MCP servers configuration:
 
