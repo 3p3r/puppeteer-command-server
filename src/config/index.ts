@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import createDebug from 'debug';
 import type { Config } from '../types';
+
+const debug = createDebug('pcs:config');
 
 function getConfigFilePath(): string {
   return path.join(process.cwd(), 'config.json');
@@ -30,7 +33,7 @@ export function loadConfig(): Config {
       return { ...DEFAULT_CONFIG, ...config };
     }
   } catch (error) {
-    console.warn('Failed to load config file, using defaults:', error);
+    debug('Failed to load config file, using defaults: %O', error);
   }
 
   return DEFAULT_CONFIG;

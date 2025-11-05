@@ -5,6 +5,7 @@ import path from 'node:path';
 import memoize from 'lodash/memoize.js';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import createDebug from 'debug';
 import AnonymizeUA from 'puppeteer-extra-plugin-anonymize-ua';
 // @ts-expect-error no types
 import UserPreferences from 'puppeteer-extra-plugin-user-preferences';
@@ -16,6 +17,8 @@ import {
   type TabInfo,
   TabNotFoundError
 } from '../types/index.js';
+
+const debug = createDebug('pcs:config');
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(AnonymizeUA());
@@ -83,7 +86,7 @@ export class BrowserManager {
 
       // Handle browser disconnection
       browser.on('disconnected', () => {
-        console.log('Browser disconnected, clearing tabs');
+        debug('Browser disconnected, clearing tabs');
         for (const [tabId, tab] of this.tabs) {
           if (tab.visible === headless) {
             this.tabs.delete(tabId);
@@ -92,7 +95,7 @@ export class BrowserManager {
         this.browsers.set(headless, null);
       });
 
-      console.log('Browser initialized successfully');
+      debug('Browser initialized successfully');
     } catch (error) {
       throw new BrowserError(`Failed to initialize browser: ${error}`);
     }
@@ -106,10 +109,12 @@ export class BrowserManager {
     try {
       const chromePath = await findChromeBrowser();
       if (chromePath) {
+        // retain for future use until restarted
+        this.chromePath = chromePath;
         return chromePath;
       }
     } catch (error) {
-      console.warn('Failed to find Chrome automatically:', error);
+      debug('Failed to find Chrome automatically: %O', error);
     }
 
     throw new BrowserError('Chrome executable not found. Please specify chromePath in config.');

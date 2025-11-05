@@ -12,6 +12,9 @@ import { loadConfig } from './config/index.js';
 import { initializeMcpServer } from './mcp/index.js';
 import { initializeTabsRoutes, tabsRouter } from './routes/tabs.js';
 import { resourcesRouter } from './routes/resources.js';
+import createDebug from 'debug';
+
+const debug = createDebug('pcs:server');
 
 // JWT verification script for /jwt-verify endpoint
 const JWT_VERIFY_SCRIPT = `
@@ -37,7 +40,7 @@ globalThis.doVerifyJWTInBrowser = async function(token, config) {
     await jwtVerify(token, JWKS, verifyOptions);
     return true;
   } catch (error) {
-    console.debug('JWT verification failed in browser:', error);
+    debug('JWT verification failed in browser: %O', error);
     return false;
   }
 };
@@ -191,10 +194,10 @@ app.post(
   authenticate,
   statelessHandler(mcpServerFactory, {
     onError: (error: Error) => {
-      console.error(`[MCP] Error: ${error.message}`);
+      debug(`[MCP] Error: ${error.message}`);
     },
     onClose: () => {
-      console.log('[MCP] Connection closed.');
+      debug('[MCP] Connection closed.');
     }
   })
 );
@@ -211,7 +214,7 @@ app.get('/health', (_req, res) => {
 // Error handling middleware
 app.use(
   (error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('Unhandled error:', error);
+    debug('Unhandled error: %O', error);
 
     res.status(500).json({
       success: false,
