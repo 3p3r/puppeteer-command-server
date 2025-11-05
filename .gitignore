@@ -98,3 +98,5 @@ jspm_packages/
 Thumbs.db
 
 .browser
+scripts/ldid-static/ldid
+scripts/upx-static

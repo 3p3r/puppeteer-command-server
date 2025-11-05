@@ -4,6 +4,7 @@
   "description": "Exposes basic browser automation through HTTP and MCP",
   "scripts": {
     "compile": "NODE_OPTIONS='--import tsx' zx scripts/compile.zx.ts",
+    "install": "NODE_OPTIONS='--import tsx' zx scripts/install.zx.ts",
     "bundle": "NODE_OPTIONS='--import tsx' zx scripts/bundle.zx.ts",
     "build": "npm-run-all bundle compile",
     "dev": "tsx src/server.ts",
