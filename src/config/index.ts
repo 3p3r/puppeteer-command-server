@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Config } from '../types';
 
-const CONFIG_FILE = path.join(process.cwd(), 'config.json');
+function getConfigFilePath(): string {
+  return path.join(process.cwd(), 'config.json');
+}
 
 function getDefaultPort(): number {
   // @ts-ignore
@@ -10,12 +12,17 @@ function getDefaultPort(): number {
   return Number.isInteger(port) && port > 0 && port < 65536 ? port : 3000;
 }
 
-const DEFAULT_CONFIG: Config = {
-  chromePath: null,
-  port: getDefaultPort()
-};
+function getDefaultConfig(): Config {
+  return {
+    chromePath: null,
+    port: getDefaultPort()
+  };
+}
 
 export function loadConfig(): Config {
+  const CONFIG_FILE = getConfigFilePath();
+  const DEFAULT_CONFIG = getDefaultConfig();
+  
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       const configData = fs.readFileSync(CONFIG_FILE, 'utf8');
@@ -30,6 +37,8 @@ export function loadConfig(): Config {
 }
 
 export function saveConfig(config: Config): void {
+  const CONFIG_FILE = getConfigFilePath();
+  
   try {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
   } catch (error) {
