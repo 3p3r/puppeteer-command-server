@@ -7,7 +7,7 @@ import createDebug from 'debug';
 import { BrowserManagerSingleton } from '../browser/BrowserManager';
 import type { Config } from '../types';
 
-const debug = createDebug('puppeteer-command-server:auth');
+const debug = createDebug('pcs:auth');
 
 export function generateApiKey(): string {
   return crypto.randomBytes(32).toString('hex');
