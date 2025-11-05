@@ -106,6 +106,8 @@ export class BrowserManager {
     try {
       const chromePath = await findChromeBrowser();
       if (chromePath) {
+        // retain for future use until restarted
+        this.chromePath = chromePath;
         return chromePath;
       }
     } catch (error) {
