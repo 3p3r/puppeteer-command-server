@@ -59,14 +59,14 @@ async function main() {
   // Process macOS binaries: upx individual binaries, then lipo
   if (buildMac || buildAll) {
     async function findLipo() {
-      const lipoPath = await Promise.race([
+      const lipoPath = await Promise.all([
         which('lipo').catch(() => null),
         which('llvm-lipo').catch(() => null),
         which('llvm-lipo-13').catch(() => null),
         which('llvm-lipo-14').catch(() => null),
         which('llvm-lipo-15').catch(() => null),
         which('lipo.exe').catch(() => null)
-      ]);
+      ]).then(paths => paths.find(path => path !== null));
       return lipoPath;
     }
 

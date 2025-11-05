@@ -2,6 +2,8 @@ name: Build and Release
 
 on:
   push:
+    branches: 
+      - 'main'
     tags:
       - 'v*'
   workflow_dispatch:
@@ -25,31 +27,42 @@ jobs:
         with:
           go-version: '1.23'
 
+      - name: Setup LLVM
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "14"
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Build application
+      - name: Bundle application
+        run: npm run bundle
+
+      - name: Build Linux first (to populate cache)
+        run: npm run compile -- --linux --fast
+
+      - name: Rebuild (full build)
         run: npm run build
 
       - name: Upload Windows binary
         uses: actions/upload-artifact@v4
         with:
           name: pcs-windows
-          path: build/win/pcs.exe
+          path: build/min/win/pcs.exe
           retention-days: 7
 
       - name: Upload Linux binary
         uses: actions/upload-artifact@v4
         with:
           name: pcs-linux
-          path: build/linux/pcs
+          path: build/min/linux/pcs
           retention-days: 7
 
       - name: Upload macOS binary
         uses: actions/upload-artifact@v4
         with:
           name: pcs-macos
-          path: build/mac/pcs
+          path: build/min/mac/pcs
           retention-days: 7
 
   release:
