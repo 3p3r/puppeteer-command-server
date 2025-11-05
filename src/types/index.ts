@@ -6,6 +6,7 @@ export interface Config {
       enabled?: boolean; // default: true
     };
     jwt?: {
+      proxy?: true;
       enabled?: boolean; // default: false
       issuer?: string;
       audience?: string;

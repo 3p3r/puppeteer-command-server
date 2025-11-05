@@ -39,6 +39,16 @@ export class BrowserManager {
   private tabs: Map<string, { page: Page; visible: boolean }> = new Map();
   private chromePath: string | null = null;
 
+  public getPageByTabId(tabId: string): Page | null {
+    const tab = this.tabs.get(tabId);
+    return tab ? tab.page : null;
+  }
+
+  public getVisibleByTabId(tabId: string): boolean | null {
+    const tab = this.tabs.get(tabId);
+    return tab ? tab.visible : null;
+  }
+
   constructor(chromePath?: string | null) {
     this.chromePath = chromePath || null;
     this.browsers.set(true, null); // headless

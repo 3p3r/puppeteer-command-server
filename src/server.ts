@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import path from 'node:path';
 import cors from 'cors';
 import express from 'express';
@@ -11,6 +12,39 @@ import { loadConfig } from './config/index.js';
 import { initializeMcpServer } from './mcp/index.js';
 import { initializeTabsRoutes, tabsRouter } from './routes/tabs.js';
 import { resourcesRouter } from './routes/resources.js';
+
+// JWT verification script for /jwt-verify endpoint
+const JWT_VERIFY_SCRIPT = `
+import { createRemoteJWKSet, jwtVerify } from '/jose/index.js';
+
+globalThis.doVerifyJWTInBrowser = async function(token, config) {
+  if (!config || !config.jwksUrl) {
+    return false;
+  }
+  
+  try {
+    const JWKS = createRemoteJWKSet(new URL(config.jwksUrl));
+    const verifyOptions = {};
+    
+    if (config.issuer) {
+      verifyOptions.issuer = config.issuer;
+    }
+    
+    if (config.audience) {
+      verifyOptions.audience = config.audience;
+    }
+    
+    await jwtVerify(token, JWKS, verifyOptions);
+    return true;
+  } catch (error) {
+    console.debug('JWT verification failed in browser:', error);
+    return false;
+  }
+};
+`;
+
+// Calculate SHA-256 hash of the script for CSP
+const JWT_VERIFY_SCRIPT_HASH = `'sha256-${crypto.createHash('sha256').update(JWT_VERIFY_SCRIPT).digest('base64')}'`;
 
 const app = express();
 
@@ -27,6 +61,14 @@ app.options('*', cors());
 const cspDefaults = helmet.contentSecurityPolicy.getDefaultDirectives();
 // biome-ignore lint/performance/noDelete: swagger won't work otherwise.
 delete cspDefaults['upgrade-insecure-requests'];
+
+// Add JWT verification script hash to existing script-src directive
+const existingScriptSrc = cspDefaults['script-src'] || ["'self'"];
+cspDefaults['script-src'] = [
+  ...existingScriptSrc,
+  // Allow inline script in /jwt-verify endpoint (hash calculated dynamically)
+  JWT_VERIFY_SCRIPT_HASH
+];
 
 // fixes swagger ui in prod
 // https://github.com/scottie1984/swagger-ui-express/issues/237
@@ -114,6 +156,23 @@ app.use(
 app.get('/swagger.json', (_req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
+});
+
+// Serve jose browser modules for JWT verification
+app.use('/jose', express.static(path.resolve(__dirname, '../node_modules/jose/dist/browser')));
+
+// JWT verification endpoint (must be public, before auth middleware)
+app.get('/jwt-verify', (_req, res) => {
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>JWT Verification</title>
+</head>
+<body>
+  <script type="module">${JWT_VERIFY_SCRIPT}</script>
+</body>
+</html>`;
+  res.send(html);
 });
 
 // Initialize browser manager and routes

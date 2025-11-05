@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { NextFunction, Request, Response } from 'express';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { BrowserManagerSingleton } from '../browser/BrowserManager';
 import type { Config } from '../types';
 
 export function generateApiKey(): string {
@@ -28,7 +29,46 @@ export function loadApiKey(): string {
   return apiKey;
 }
 
-async function verifyJWT(
+async function verifyJWTInBrowser(
+  token: string,
+  config: NonNullable<Config['auth']>['jwt'],
+  port: number
+): Promise<boolean> {
+  const browserManager = BrowserManagerSingleton();
+  const verifyUrl = `http://localhost:${port}/jwt-verify`;
+
+  try {
+    // todo: reuse tab if possible or integrate with token's timeout duration
+    const tabId = await browserManager.openTab({
+      url: verifyUrl,
+      headless: true
+    });
+
+    const page = browserManager.getPageByTabId(tabId);
+
+    if (!page) {
+      throw new Error('Failed to get page for JWT verification');
+    }
+
+    const resultText = await page.evaluate(
+      async (token, config) => {
+        const r = await (globalThis as any).doVerifyJWTInBrowser(token, config);
+        return r ? 'valid' : 'invalid';
+      },
+      token,
+      config
+    );
+
+    await browserManager.closeTab(tabId);
+
+    return resultText === 'valid';
+  } catch (error) {
+    console.debug('JWT verification in browser failed:', error);
+    return false;
+  }
+}
+
+async function verifyJWTInProcess(
   token: string,
   config: NonNullable<Config['auth']>['jwt']
 ): Promise<boolean> {
@@ -83,9 +123,12 @@ export function createAuthMiddleware(config: Config) {
     if (jwtEnabled && config.auth?.jwt) {
       authStrategies.push(async () => {
         const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
+        if (authHeader?.startsWith('Bearer ')) {
           const token = authHeader.substring(7);
-          return await verifyJWT(token, config.auth!.jwt!);
+          if (config?.auth?.jwt?.proxy) {
+            return await verifyJWTInBrowser(token, config.auth!.jwt!, config.port);
+          }
+          return await verifyJWTInProcess(token, config.auth!.jwt!);
         }
         return false;
       });

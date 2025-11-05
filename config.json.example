@@ -7,6 +7,7 @@
     },
     "jwt": {
       "enabled": false,
+      "proxy": false,
       "jwksUrl": "https://your-auth-server.com/.well-known/jwks.json",
       "issuer": "https://your-auth-server.com",
       "audience": "https://your-api-domain.com"

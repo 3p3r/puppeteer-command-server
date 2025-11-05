@@ -29,6 +29,8 @@ For example:
 - `http://localhost:3000/api`: the RESTful API
 - `http://localhost:3000/mcp`: the MCP endpoint
 - `http://localhost:3000/docs`: the Swagger docs endpoint
+- `http://localhost:3000/jose`: Jose library browser modules (for JWT verification)
+- `http://localhost:3000/jwt-verify`: Browser-based JWT verification page
 
 Port is configurable with the `PCS_PORT` environment variable (default: `3000`).
 
@@ -108,6 +110,30 @@ Use JWT tokens in the `Authorization` header:
 ```bash
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" http://localhost:3000/api/tabs/list
 ```
+
+#### Browser-Based JWT Verification
+
+For JWT verification that needs to happen in a browser context (e.g., for testing browser-side authentication flows), enable the `proxy` option:
+
+```json
+{
+  "auth": {
+    "jwt": {
+      "enabled": true,
+      "proxy": true,
+      "jwksUrl": "https://your-auth-server.com/.well-known/jwks.json",
+      "issuer": "https://your-auth-server.com",
+      "audience": "https://your-api-domain.com"
+    }
+  }
+}
+```
+
+When `proxy: true` is set, JWT verification happens in a browser tab using the Jose library loaded as an ES module. This allows verification to occur in the same environment as your browser automation, which can be useful for debugging or working around network restrictions.
+
+The server automatically serves:
+- `/jose/*` - Jose library browser modules from `node_modules`
+- `/jwt-verify` - HTML page that implements browser-based JWT verification
 
 Both strategies can be enabled simultaneously. If both are enabled, either valid
 API key OR valid JWT token will grant access.

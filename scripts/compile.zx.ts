@@ -155,7 +155,6 @@ async function main() {
         goBuilds.push(
           (async () => {
             console.log(chalk.blue('Building Go binary for macOS...'));
-            // todo: use lipo here
             await $`GOOS=darwin GOARCH=amd64 ${go} build -o ${path.join(SIG_BUILD_OUTPUT_DIR, 'mac/sig')} ./sig`;
           })()
         );
