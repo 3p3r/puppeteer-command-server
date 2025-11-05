@@ -3,8 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { NextFunction, Request, Response } from 'express';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import createDebug from 'debug';
 import { BrowserManagerSingleton } from '../browser/BrowserManager';
 import type { Config } from '../types';
+
+const debug = createDebug('puppeteer-command-server:auth');
 
 export function generateApiKey(): string {
   return crypto.randomBytes(32).toString('hex');
@@ -17,15 +20,23 @@ export function loadApiKey(): string {
     try {
       return fs.readFileSync(secretPath, 'utf8').trim();
     } catch (error) {
-      console.warn('Failed to read .secret file, generating new key:', error);
+      debug('Failed to read .secret file, generating new key: %O', error);
       const apiKey = generateApiKey();
-      fs.writeFileSync(secretPath, apiKey);
+      try {
+        fs.writeFileSync(secretPath, apiKey);
+      } catch (writeError) {
+        debug('Failed to write .secret file: %O', writeError);
+      }
       return apiKey;
     }
   }
 
   const apiKey = generateApiKey();
-  fs.writeFileSync(secretPath, apiKey);
+  try {
+    fs.writeFileSync(secretPath, apiKey);
+  } catch (error) {
+    debug('Failed to write new .secret file: %O', error);
+  }
   return apiKey;
 }
 
@@ -63,7 +74,7 @@ async function verifyJWTInBrowser(
 
     return resultText === 'valid';
   } catch (error) {
-    console.debug('JWT verification in browser failed:', error);
+    debug('JWT verification in browser failed: %O', error);
     return false;
   }
 }
@@ -91,7 +102,7 @@ async function verifyJWTInProcess(
     await jwtVerify(token, JWKS, verifyOptions);
     return true;
   } catch (error) {
-    console.debug('JWT verification failed:', error);
+    debug('JWT verification failed: %O', error);
     return false;
   }
 }
