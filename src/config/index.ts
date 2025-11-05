@@ -22,7 +22,7 @@ function getDefaultConfig(): Config {
 export function loadConfig(): Config {
   const CONFIG_FILE = getConfigFilePath();
   const DEFAULT_CONFIG = getDefaultConfig();
-  
+
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       const configData = fs.readFileSync(CONFIG_FILE, 'utf8');
@@ -38,7 +38,7 @@ export function loadConfig(): Config {
 
 export function saveConfig(config: Config): void {
   const CONFIG_FILE = getConfigFilePath();
-  
+
   try {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
   } catch (error) {

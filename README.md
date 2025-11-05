@@ -6,7 +6,8 @@ Exposes basic browser automation through HTTP and MCP for generative UI apps.
 - [Authentication](#authentication)
   - [1. API Key Authentication (Default: Enabled)](#1-api-key-authentication-default-enabled)
   - [2. JWT Bearer Token Authentication (Default: Disabled)](#2-jwt-bearer-token-authentication-default-disabled)
-  - [MCP Server Authentication](#mcp-server-authentication)
+    - [Browser-Based JWT Verification](#browser-based-jwt-verification)
+  - [MCP Server testing](#mcp-server-testing)
 - [Platforms](#platforms)
 - [Distribution](#distribution)
 - [Environment](#environment)
@@ -138,7 +139,7 @@ The server automatically serves:
 Both strategies can be enabled simultaneously. If both are enabled, either valid
 API key OR valid JWT token will grant access.
 
-### MCP Server Authentication
+### MCP Server testing
 
 To interact and test the MCP server, you can use:
 
