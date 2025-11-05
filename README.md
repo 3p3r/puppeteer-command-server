@@ -27,11 +27,11 @@ This project on launch exposes the following endpoints:
 
 For example:
 
-- `http://localhost:3000/api`: the RESTful API
-- `http://localhost:3000/mcp`: the MCP endpoint
-- `http://localhost:3000/docs`: the Swagger docs endpoint
-- `http://localhost:3000/jose`: Jose library browser modules (for JWT verification)
-- `http://localhost:3000/jwt-verify`: Browser-based JWT verification page
+- <http://localhost:3000/api>: the RESTful API
+- <http://localhost:3000/mcp>: the MCP endpoint
+- <http://localhost:3000/docs>: the Swagger docs endpoint
+- <http://localhost:3000/jose>: Jose library browser modules (for JWT verification)
+- <http://localhost:3000/jwt-verify>: Browser-based JWT verification page
 
 Port is configurable with the `PCS_PORT` environment variable (default: `3000`).
 
