@@ -29,12 +29,11 @@ async function main() {
   }
 
   // do we have upx installed?
-  const upxPath = await which('upx2').catch(() => null);
+  const upxPath = await which('upx').catch(() => null);
 
   if (upxPath) {
     console.log(chalk.blue(`Found upx at: ${upxPath}`));
-  }
-  if (!fs.existsSync('scripts/upx-static/upx')) {
+  } else if (!fs.existsSync('scripts/upx-static/upx')) {
     const url = 'https://github.com/upx/upx/releases/download/v5.0.2/upx-5.0.2-amd64_linux.tar.xz';
     console.log(chalk.yellow('upx not found. Installing upx via Github release...'));
     await $`mkdir -p scripts/upx-static`;
