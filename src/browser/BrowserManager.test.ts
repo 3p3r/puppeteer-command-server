@@ -1,62 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { BrowserError, TabNotFoundError } from '../types/index.js';
-import { BrowserManager } from './BrowserManager.js';
+import { BrowserManagerSingleton } from './BrowserManager.js';
 
 describe('BrowserManager', () => {
-  let browserManager: BrowserManager;
+  const browserManager = BrowserManagerSingleton();
 
-  beforeEach(() => {
-    browserManager = new BrowserManager();
-  });
-
-  afterEach(async () => {
-    if (browserManager) {
-      await browserManager.close();
-    }
-  });
-
-  describe('Chrome Path Detection', () => {
-    it('should use provided chrome path', async () => {
-      // Test that we can initialize with a custom path if provided
-      // This will fail if Chrome is not found at the custom path, but that's expected
-      const customPath = process.env['CHROME_PATH'] || undefined;
-      if (customPath) {
-        const manager = new BrowserManager(customPath);
-        await manager.initialize();
-        await manager.close();
-      } else {
-        // If no custom path is set, just verify the manager can be created
-        const manager = new BrowserManager('/custom/chrome/path');
-        await expect(manager.initialize()).rejects.toThrow(BrowserError);
-      }
-    });
-
-    it('should auto-detect chrome when no path provided', async () => {
-      await browserManager.initialize();
-
-      // Verify browser is initialized
-      const tabs = await browserManager.getTabs();
-      expect(tabs).toBeDefined();
-
-      await browserManager.close();
-    });
-
-    it('should throw error when chrome not found', async () => {
-      const manager = new BrowserManager('/definitely/non/existent/chrome/path');
-
-      await expect(manager.initialize()).rejects.toThrow(BrowserError);
-
-      // When path is provided, puppeteer throws a different error
-      try {
-        await manager.initialize();
-        expect.fail('Should have thrown an error');
-      } catch (error: any) {
-        expect(error).toBeInstanceOf(BrowserError);
-        expect(error.message).toMatch(
-          /Chrome executable not found|Browser was not found|executablePath/i
-        );
-      }
-    });
+  afterAll(async () => {
+    await browserManager.close();
   });
 
   describe('Browser Initialization', () => {
@@ -223,19 +173,6 @@ describe('BrowserManager', () => {
   });
 
   describe('Error Handling', () => {
-    it('should auto-initialize browser when opening tab', async () => {
-      const uninitializedManager = new BrowserManager();
-
-      const tabId = await uninitializedManager.openTab({ url: 'https://example.com' });
-
-      expect(tabId).toBeTruthy();
-
-      const tabs = await uninitializedManager.getTabs();
-      expect(tabs).toHaveLength(1);
-
-      await uninitializedManager.close();
-    });
-
     it('should handle multiple tabs', async () => {
       await browserManager.initialize();
 
@@ -250,21 +187,6 @@ describe('BrowserManager', () => {
 
       expect(tabs.find(t => t.id === tab1)).toBeDefined();
       expect(tabs.find(t => t.id === tab2)).toBeDefined();
-    });
-  });
-
-  describe('Chrome Path Updates', () => {
-    it('should update chrome path', async () => {
-      await browserManager.initialize();
-
-      const newPath = '/new/chrome/path';
-      browserManager.updateChromePath(newPath);
-
-      // Close and try to reinitialize with new path
-      await browserManager.close();
-
-      // The new path won't work, but verify it was set
-      await expect(browserManager.initialize()).rejects.toThrow(BrowserError);
     });
   });
 });

@@ -34,9 +34,18 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
 
       - name: Bundle application
         run: npm run bundle
+      
+      - name: Run tests
+        uses: mujo-code/puppeteer-headful@bc2b5958b7446b44440b8a4f2ff40c0ce308f5ad
+        env:
+          CI: "true"
+        with:
+          args: npm test
 
       - name: Build Linux first (to populate cache)
         run: npm run compile -- --linux --fast

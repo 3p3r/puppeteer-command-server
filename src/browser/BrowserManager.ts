@@ -37,7 +37,7 @@ puppeteer.use(
   })
 );
 
-export class BrowserManager {
+class BrowserManager {
   private browsers: Map<boolean, Browser | null> = new Map();
   private tabs: Map<string, { page: Page; visible: boolean }> = new Map();
   private chromePath: string | null = null;
@@ -102,6 +102,10 @@ export class BrowserManager {
   }
 
   private async getChromePath(): Promise<string> {
+    if (process.env['CI'] && process.env['PUPPETEER_EXEC_PATH']) {
+      return process.env['PUPPETEER_EXEC_PATH'];
+    }
+
     if (this.chromePath) {
       return this.chromePath;
     }
@@ -465,7 +469,7 @@ export class BrowserManager {
     }
   }
 
-  async close(): Promise<void> {
+  async close(waitPostClose = 250): Promise<void> {
     for (const [headless, browser] of this.browsers) {
       if (browser) {
         await browser.close();
@@ -473,6 +477,7 @@ export class BrowserManager {
       }
     }
     this.tabs.clear();
+    await new Promise(resolve => setTimeout(resolve, waitPostClose));
   }
 
   updateChromePath(chromePath: string | null): void {
