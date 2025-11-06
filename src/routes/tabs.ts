@@ -1,5 +1,5 @@
 import { type Request, type Response, Router } from 'express';
-import { type BrowserManager, BrowserManagerSingleton } from '../browser/BrowserManager.js';
+import { BrowserManagerSingleton } from '../browser/BrowserManager.js';
 import {
   type ApiResponse,
   type ClickRequest,
@@ -20,7 +20,7 @@ import {
 const router = Router();
 
 // Initialize browser manager
-let browserManager: BrowserManager;
+let browserManager: ReturnType<typeof BrowserManagerSingleton>;
 
 export function initializeTabsRoutes(chromePath?: string | null): void {
   browserManager = BrowserManagerSingleton(chromePath);

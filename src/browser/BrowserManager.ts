@@ -1,6 +1,6 @@
+import fs from 'node:fs/promises';
 import assert from 'node:assert';
 import { randomUUID } from 'node:crypto';
-import os from 'node:os';
 import path from 'node:path';
 import memoize from 'lodash/memoize.js';
 import puppeteer from 'puppeteer-extra';
@@ -17,6 +17,7 @@ import {
   type TabInfo,
   TabNotFoundError
 } from '../types/index.js';
+import { ensureBaseWorkingDirectory } from '../config/index.js';
 
 const debug = createDebug('pcs:config');
 
@@ -28,7 +29,7 @@ puppeteer.use(
       download: {
         prompt_for_download: false,
         open_pdf_in_system_reader: true,
-        default_directory: process.cwd()
+        default_directory: ensureBaseWorkingDirectory()
       },
       plugins: {
         always_open_pdf_externally: true
@@ -59,6 +60,7 @@ class BrowserManager {
   }
 
   async initialize(headless = true): Promise<void> {
+    const cwd = ensureBaseWorkingDirectory();
     try {
       await this.close();
       const executablePath = await this.getChromePath();
@@ -71,8 +73,7 @@ class BrowserManager {
         '--no-zygote',
         '--disable-gpu',
         '--mute-audio',
-        `--user-data-dir=${path.resolve(os.homedir(), '.pcs-browser')}`
-        // `--user-data-dir=${path.resolve(process.cwd(), '.browser')}`
+        `--user-data-dir=${path.resolve(cwd, '.browser')}`
       ];
 
       const browser = await puppeteer.launch({
@@ -478,6 +479,13 @@ class BrowserManager {
     }
     this.tabs.clear();
     await new Promise(resolve => setTimeout(resolve, waitPostClose));
+  }
+
+  async cleanBrowserData(): Promise<void> {
+    await this.close();
+    await fs
+      .rm(path.join(ensureBaseWorkingDirectory(), '.browser'), { recursive: true, force: true })
+      .catch(() => {});
   }
 
   updateChromePath(chromePath: string | null): void {

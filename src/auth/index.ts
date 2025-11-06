@@ -6,6 +6,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import createDebug from 'debug';
 import { BrowserManagerSingleton } from '../browser/BrowserManager';
 import type { Config } from '../types';
+import { ensureBaseWorkingDirectory } from '../config';
 
 const debug = createDebug('pcs:auth');
 
@@ -14,7 +15,8 @@ export function generateApiKey(): string {
 }
 
 export function loadApiKey(): string {
-  const secretPath = path.join(process.cwd(), '.secret');
+  const cwd = ensureBaseWorkingDirectory();
+  const secretPath = path.join(cwd, '.secret');
 
   if (fs.existsSync(secretPath)) {
     try {

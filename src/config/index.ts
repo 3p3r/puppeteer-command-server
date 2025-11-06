@@ -1,12 +1,63 @@
+import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import createDebug from 'debug';
+import memoize from 'lodash/memoize.js';
 import type { Config } from '../types';
 
 const debug = createDebug('pcs:config');
 
+function hasWriteAccessToHomeDirectory(): boolean {
+  try {
+    fs.accessSync(os.homedir(), fs.constants.W_OK);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function hasWriteAccessToCurrentDirectory(): boolean {
+  try {
+    fs.accessSync(process.cwd(), fs.constants.W_OK);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function hasWriteAccessToTempDirectory(): boolean {
+  try {
+    fs.accessSync(os.tmpdir(), fs.constants.W_OK);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function getBaseWorkingDirectory(): string {
+  if (hasWriteAccessToCurrentDirectory()) {
+    return path.resolve(process.cwd(), '.pcs');
+  }
+  if (hasWriteAccessToHomeDirectory()) {
+    return path.resolve(os.homedir(), '.pcs');
+  }
+  if (hasWriteAccessToTempDirectory()) {
+    return path.resolve(os.tmpdir(), '.pcs');
+  }
+  throw new Error('No write access to any working directory');
+}
+
+export const ensureBaseWorkingDirectory = memoize(() => {
+  const baseWorkingDirectory = getBaseWorkingDirectory();
+  if (!fs.existsSync(baseWorkingDirectory)) {
+    fs.mkdirSync(baseWorkingDirectory, { recursive: true });
+  }
+  return baseWorkingDirectory;
+});
+
 function getConfigFilePath(): string {
-  return path.join(process.cwd(), 'config.json');
+  const cwd = ensureBaseWorkingDirectory();
+  return path.join(cwd, 'config.json');
 }
 
 function getDefaultPort(): number {

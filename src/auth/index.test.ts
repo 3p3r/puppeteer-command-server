@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { generateApiKey, loadApiKey, createAuthMiddleware } from './index.js';
 import type { Config } from '../types/index.js';
+import { ensureBaseWorkingDirectory } from '../config/index.js';
 
 // Mock fs module
 vi.mock('fs');
@@ -55,11 +56,12 @@ describe('Authentication System', () => {
       mockFs.existsSync.mockReturnValue(false);
 
       const key = loadApiKey();
+      const cwd = ensureBaseWorkingDirectory();
 
       expect(key).toHaveLength(64);
       expect(key).toMatch(/^[a-f0-9]+$/);
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-        path.join(process.cwd(), '.secret'),
+        path.join(cwd, '.secret'),
         expect.any(String)
       );
     });
@@ -70,9 +72,10 @@ describe('Authentication System', () => {
       mockFs.readFileSync.mockReturnValue(existingKey);
 
       const key = loadApiKey();
+      const cwd = ensureBaseWorkingDirectory();
 
       expect(key).toBe(existingKey);
-      expect(mockFs.readFileSync).toHaveBeenCalledWith(path.join(process.cwd(), '.secret'), 'utf8');
+      expect(mockFs.readFileSync).toHaveBeenCalledWith(path.join(cwd, '.secret'), 'utf8');
     });
 
     it('should handle file read errors gracefully', () => {

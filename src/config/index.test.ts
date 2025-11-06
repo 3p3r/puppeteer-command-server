@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadConfig, saveConfig, updateConfig } from './index.js';
+import { ensureBaseWorkingDirectory, loadConfig, saveConfig, updateConfig } from './index.js';
 
 // Mock fs module
 vi.mock('fs');
@@ -9,7 +9,8 @@ vi.mock('fs');
 const mockFs = vi.mocked(fs);
 
 describe('Configuration Management', () => {
-  const CONFIG_FILE = path.join(process.cwd(), 'config.json');
+  const cwd = ensureBaseWorkingDirectory();
+  const CONFIG_FILE = path.join(cwd, 'config.json');
 
   beforeEach(() => {
     vi.clearAllMocks();
