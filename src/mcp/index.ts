@@ -568,6 +568,23 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
   );
 
   mcp.tool(
+    'browser_clean_browser_data',
+    'Clean the browser data directory by removing the .browser folder and all its contents. This operation closes all tabs and browser instances, then deletes the browser user data directory. Useful for completely resetting browser state, clearing cookies, cache, and all stored browser data. This is a destructive operation that permanently removes all browser data.',
+    {},
+    async () => {
+      await browserManager.cleanBrowserData();
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ success: true })
+          }
+        ]
+      };
+    }
+  );
+
+  mcp.tool(
     'browser_clean_resource',
     'Remove a specific screenshot resource from the resource cache by its URI. Once removed, the resource will no longer be available via the MCP resources API. Use this to free up memory or remove outdated screenshots.',
     {

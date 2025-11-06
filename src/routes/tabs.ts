@@ -669,6 +669,30 @@ router.delete('/closeAll', async (_req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /api/tabs/cleanBrowserData:
+ *   delete:
+ *     summary: Clean browser data directory
+ *     tags: [Tabs]
+ *     description: Cleans the browser data directory by removing the .browser folder and all its contents. This closes all tabs and browsers before cleaning.
+ *     responses:
+ *       200:
+ *         description: Browser data cleaned successfully
+ */
+router.delete('/cleanBrowserData', async (_req: Request, res: Response) => {
+  try {
+    await browserManager.cleanBrowserData();
+
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
  * /api/tabs/bringToFront/{tabId}:
  *   post:
  *     summary: Bring tab to front

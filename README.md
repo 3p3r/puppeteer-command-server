@@ -53,6 +53,7 @@ Assuming access to the path of the Chrome executable, the server offers this API
 - `tabs/eval/:tabId`: evaluates JavaScript in the context of the tab with the given ID
 - `tabs/close/:tabId`: closes the tab with the given ID
 - `tabs/closeAll`: closes all open tabs
+- `tabs/cleanBrowserData`: cleans browser data directory and user data
 - `tabs/bringToFront/:tabId`: brings the tab with the given ID to front
 - `tabs/focus/:tabId`: focuses on a specific element via selector in the tab with the given ID
 - `tabs/goBack/:tabId`: navigates back in browser history for the tab with the given ID

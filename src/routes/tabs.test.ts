@@ -150,6 +150,10 @@ describe('Tab Routes - Request Validation', () => {
     app.delete('/api/tabs/closeAll', (_req, res) => {
       return res.json({ success: true });
     });
+
+    app.delete('/api/tabs/cleanBrowserData', (_req, res) => {
+      return res.json({ success: true });
+    });
   });
 
   describe('Authentication', () => {
@@ -403,6 +407,35 @@ describe('Tab Routes - Request Validation', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
+    });
+
+    it('should return 200 for valid cleanBrowserData request', async () => {
+      const response = await request(app)
+        .delete('/api/tabs/cleanBrowserData')
+        .set('x-api-key', 'test-key');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should accept cleanBrowserData request with valid JWT token', async () => {
+      const response = await request(app)
+        .delete('/api/tabs/cleanBrowserData')
+        .set('Authorization', 'Bearer test-jwt-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should reject cleanBrowserData request without authentication', async () => {
+      const response = await request(app).delete('/api/tabs/cleanBrowserData');
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        success: false,
+        error: 'Unauthorized: Invalid or missing API key',
+        code: 'INVALID_API_KEY'
+      });
     });
   });
 });
