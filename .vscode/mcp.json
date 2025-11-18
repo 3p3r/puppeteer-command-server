@@ -1,10 +1,10 @@
 {
-	"servers": {
-		"puppeteer-command-server": {
-			"type": "stdio",
-			"command": "${workspaceFolder}/build/min/linux/pcs",
-			"args": []
-		}
-	},
-	"inputs": []
+  "servers": {
+    "puppeteer-command-server": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/build/min/linux/pcs",
+      "args": ["--no-http"],
+    }
+  },
+  "inputs": []
 }

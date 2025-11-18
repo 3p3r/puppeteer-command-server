@@ -236,12 +236,17 @@ app.use('*', (_req, res) => {
   });
 });
 
-// Start server
-app.listen(config.port, '0.0.0.0', () => {
-  debug(`🚀 Puppeteer Command Server running on port ${config.port}`);
-  debug(`📚 API Documentation: http://localhost:${config.port}/docs`);
-  debug(`🔧 MCP Endpoint: http://localhost:${config.port}/mcp`);
-  debug('🔑 API Key generated and saved to .secret');
-});
+const noHttp = process.argv.includes('--no-http');
+
+if (noHttp) {
+  debug('⚠️  HTTP server is disabled (--no-http flag set)');
+} else {
+  app.listen(config.port, '0.0.0.0', () => {
+    debug(`🚀 Puppeteer Command Server running on port ${config.port}`);
+    debug(`📚 API Documentation: http://localhost:${config.port}/docs`);
+    debug(`🔧 MCP Endpoint: http://localhost:${config.port}/mcp`);
+    debug('🔑 API Key generated and saved to .secret');
+  });
+}
 
 export default app;

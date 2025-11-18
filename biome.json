@@ -46,6 +46,14 @@
   },
   "files": {
     "include": ["src/**/*", "scripts/**/*", "*.ts", "*.js", "*.json"],
-    "ignore": ["node_modules/**/*", "dist/**/*", "build/**/*", "coverage/**/*", "*.min.js"]
+    "ignore": [
+      "node_modules/**/*",
+      "dist/**/*",
+      "build/**/*",
+      "coverage/**/*",
+      "*.min.js",
+      ".vscode/**/*",
+      ".pcs/**/*"
+    ]
   }
 }
