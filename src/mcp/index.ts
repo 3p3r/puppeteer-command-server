@@ -7,6 +7,7 @@ import {
   type Resource
 } from '@modelcontextprotocol/sdk/types.js';
 import { ALL_IMAGES } from '../routes/resources.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 export function initializeMcpServer(chromePath?: string | null): McpServer {
   const browserManager = BrowserManagerSingleton(chromePath);
@@ -623,6 +624,10 @@ export function initializeMcpServer(chromePath?: string | null): McpServer {
       };
     }
   );
+
+  const altTransport = new StdioServerTransport();
+  mcp.connect(altTransport);
+  console.error('MCP server initialized with STDIO transport');
 
   return mcp;
 }
