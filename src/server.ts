@@ -239,7 +239,10 @@ app.use('*', (_req, res) => {
 const noHttp = process.argv.includes('--no-http');
 
 if (noHttp) {
-  debug('⚠️  HTTP server is disabled (--no-http flag set)');
+  debug('⚠️ HTTP server is disabled (--no-http flag set)');
+  debug('🔧 MCP Server running in STDIO mode');
+  // Keep process alive for stdio transport
+  process.stdin.resume();
 } else {
   app.listen(config.port, '0.0.0.0', () => {
     debug(`🚀 Puppeteer Command Server running on port ${config.port}`);
